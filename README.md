@@ -1,2 +1,1 @@
 # Veltrix
-React + Express + Graphql
