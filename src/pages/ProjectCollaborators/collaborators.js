@@ -144,7 +144,7 @@ class CollaboratorsPage extends Component {
                 <h4 className="font-size-18">Project Collaborators</h4>
                 <ol className="breadcrumb mb-0">
                   <li className="breadcrumb-item">
-                    <Link to="/#">Project Collaborators</Link>
+                    <Link to="/#">Project Attributes</Link>
                   </li>
                   <li className="breadcrumb-item active">Collaborators</li>
                 </ol>

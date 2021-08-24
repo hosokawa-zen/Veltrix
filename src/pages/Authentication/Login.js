@@ -60,7 +60,7 @@ class Login extends Component {
                       Welcome Back !
                     </h4>
                     <p className="text-muted text-center">
-                      Sign in to continue to Veltrix.
+                      Sign in to continue to P2IC.
                     </p>
 
                     <form className="mt-4" action="#">
@@ -133,9 +133,9 @@ class Login extends Component {
                         </Link>{" "}
                       </p>
                       <p>
-                        © {new Date().getFullYear()} Veltrix. Crafted with{" "}
+                        © {new Date().getFullYear()} P2IC. Crafted with{" "}
                         <i className="mdi mdi-heart text-danger"></i> by
-                        Themesbrand
+                        Blue Ocean HPA
                       </p>
                     </div>
                   </div>

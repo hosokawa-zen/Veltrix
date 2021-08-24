@@ -121,12 +121,12 @@ class ProjectAttributesPage extends Component {
           <Row className="align-items-center">
             <Col sm={6}>
               <div className="page-title-box">
-                <h4 className="font-size-18">Project Attributes</h4>
+                <h4 className="font-size-18">Project Tags</h4>
                 <ol className="breadcrumb mb-0">
                   <li className="breadcrumb-item">
                     <Link to="/#">Project Attributes</Link>
                   </li>
-                  <li className="breadcrumb-item active">Project Attributes</li>
+                  <li className="breadcrumb-item active">Project Tags</li>
                 </ol>
               </div>
             </Col>

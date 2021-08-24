@@ -16,25 +16,25 @@ const SidebarContent = props => {
           </Link>
         </li>
 
-        <li className="menu-title">Main</li>
+        <li className="menu-title">Production System</li>
 
         <li>
           <Link to="/#" className="has-arrow waves-effect">
-            <i className="ti-email"></i>
-            <span>Product Control</span>
+            <i className="ti-view-grid"></i>
+            <span>Production Control</span>
           </Link>
           <ul className="sub-menu" aria-expanded="false">
             <li>
               <Link to="/constraints-log">Constraints Log</Link>
             </li>
             <li>
-              <Link to="/make-ready-plan">MakeReady Plan</Link>
+              <Link to="/make-ready-plan">Visual Planner</Link>
             </li>
             <li>
               <Link to="/commitment-plan">Commitment Plan</Link>
             </li>
             <li>
-              <Link to="/standard-process-library">Standard Process Library</Link>
+              <Link to="/standard-process-library">Process Library</Link>
             </li>
             <li>
               <Link to="/analytics">Analytics</Link>
@@ -44,36 +44,32 @@ const SidebarContent = props => {
 
         <li>
           <Link to="/#" className="has-arrow waves-effect">
+            <i className="ti-layout"></i>
+            <span>Project Attributes</span>
+          </Link>
+          <ul className="sub-menu" aria-expanded="false">
+            <li>
+              <Link to="project-attributes">Project Tags</Link>
+            </li>
+			<li>
+              <Link to="project-collaborators">Collaborators</Link>
+            </li>
+			<li>
+              <Link to="#">Reason Codes</Link>
+            </li>
+          </ul>
+        </li>
+		
+		<li className="menu-title">Project Request</li>
+		
+		<li>
+          <Link to="/#" className="has-arrow waves-effect">
             <i className="ti-package"></i>
             <span>Digital Design</span>
           </Link>
           <ul className="sub-menu" aria-expanded="false">
             <li>
               <Link to="digital-design-view">View </Link>
-            </li>
-          </ul>
-        </li>
-
-        <li>
-          <Link to="/#" className="has-arrow waves-effect">
-            <i className="ti-receipt"></i>
-            <span>Project Attributes</span>
-          </Link>
-          <ul className="sub-menu" aria-expanded="false">
-            <li>
-              <Link to="project-attributes">Project Attributes</Link>
-            </li>
-          </ul>
-        </li>
-
-        <li>
-          <Link to="/#" className="has-arrow waves-effect">
-            <i className="ti-pie-chart"></i>
-            <span>Project Collaborators</span>
-          </Link>
-          <ul className="sub-menu" aria-expanded="false">
-            <li>
-              <Link to="project-collaborators">Collaborators</Link>
             </li>
           </ul>
         </li>

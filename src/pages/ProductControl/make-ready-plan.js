@@ -20,19 +20,19 @@ class MakeReadyPlanPage extends Component {
           <Row className="align-items-center">
             <Col sm={6}>
               <div className="page-title-box">
-                <h4 className="font-size-18">MakeReady Plan</h4>
+                <h4 className="font-size-18">Visual Planner</h4>
                 <ol className="breadcrumb mb-0">
                   <li className="breadcrumb-item">
-                    <Link to="/#">Product Control</Link>
+                    <Link to="/#">Production Control</Link>
                   </li>
-                  <li className="breadcrumb-item active">MakeReady Plan</li>
+                  <li className="breadcrumb-item active">Visual Planner</li>
                 </ol>
               </div>
             </Col>
           </Row>
 
           <Row>
-
+			
           </Row>
         </div>
       </React.Fragment>
