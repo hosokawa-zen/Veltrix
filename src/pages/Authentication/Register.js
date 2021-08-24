@@ -19,9 +19,10 @@ class Register extends Component {
     let useremail = document.getElementById('useremail').value;
     let username = document.getElementById('username').value;
     let userpassword = document.getElementById('userpassword').value;
+    let role = 'user';
     if(useremail.trim().length && this.validateEmail(useremail) && username.trim().length && userpassword.trim().length){
       try{
-        await getBackendAPI().registerUser(useremail, username, userpassword);
+        await getBackendAPI().registerUser(useremail, username, userpassword, role);
         history.push('/login');
       } catch(e){
         console.log('error', e);
@@ -29,7 +30,7 @@ class Register extends Component {
     }
   }
 
-  
+
   validateEmail = (email) => {
     const re = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
     return re.test(String(email).toLowerCase());

@@ -26,6 +26,7 @@ import ProjectAttributes from "../pages/ProjectAttributes/project-attributes";
 
 // Project Collaborators
 import ProjectCollaborators from "../pages/ProjectCollaborators/collaborators";
+import UserCapabilities from "../pages/Admin/user-capabilities";
 
 
 const authProtectedRoutes = [
@@ -35,16 +36,19 @@ const authProtectedRoutes = [
   { path: "/commitment-plan", component: CommitmentPlan },
   { path: "/standard-process-library", component: StandardProcessLibrary },
   { path: "/analytics", component: Analytics },
-  
+
   // Digital Design
-  { path: "/digital-design-view", component: DigitalDesignView }, 
-  
+  { path: "/digital-design-view", component: DigitalDesignView },
+
   // Project Attributes
   { path: "/project-attributes", component: ProjectAttributes },
-  
+
   // Project Collaborators
   { path: "/project-collaborators", component: ProjectCollaborators },
-  
+
+  // System Admin
+  { path: "/user-capabilities", component: UserCapabilities },
+
   // Dashboard
   { path: "/dashboard", component: Dashboard },
   { path: "/", exact: true, component: () => <Redirect to="/dashboard" /> },

@@ -3,9 +3,9 @@ const jwt = require("jsonwebtoken");
 var bcrypt = require("bcryptjs");
 const nodemailer  = require("nodemailer");
 const Config = require('../config');
-const { User, Team, Member, Association, ProjectAttribute } = require('../models/index');
+const { User, Team, Member, Association, ProjectAttribute, Project, Plan } = require('../models/index');
 
-const { GraphQLObjectType, GraphQLString, 
+const { GraphQLObjectType, GraphQLString,
        GraphQLID, GraphQLNonNull, GraphQLSchema, GraphQLList, GraphQLBoolean } = graphql;
 
 // Setting Mailer
@@ -33,9 +33,10 @@ const UserType = new GraphQLObjectType({
     name: 'User',
     fields: () => ({
         _id: { type: GraphQLString },
-        email: { type: GraphQLString }, 
+        email: { type: GraphQLString },
         name: { type: GraphQLString },
         password: { type: GraphQLString },
+        role: { type: GraphQLString },
         token: { type: GraphQLString }
     })
 });
@@ -44,7 +45,7 @@ const ProjectAttributeType = new GraphQLObjectType({
     name: 'ProjectAttribute',
     fields: () => ({
         _id: { type: GraphQLString },
-        attribute_name: { type: GraphQLString }, 
+        attribute_name: { type: GraphQLString },
         tag_name: { type: GraphQLString },
         handle: { type: GraphQLString }
     })
@@ -54,7 +55,7 @@ const TeamType = new GraphQLObjectType({
     name: 'Team',
     fields: () => ({
         _id: { type: GraphQLString },
-        name: { type: GraphQLString }, 
+        name: { type: GraphQLString },
         abrv: { type: GraphQLString },
         handle: { type: GraphQLString },
         planning: { type: GraphQLString }
@@ -65,8 +66,8 @@ const MemberType = new GraphQLObjectType({
     name: 'Member',
     fields: () => ({
         _id: { type: GraphQLString },
-        first_name: { type: GraphQLString }, 
-        last_name: { type: GraphQLString }, 
+        first_name: { type: GraphQLString },
+        last_name: { type: GraphQLString },
         abrv: { type: GraphQLString },
         handle: { type: GraphQLString },
         email: { type: GraphQLString },
@@ -78,7 +79,7 @@ const AssociationType = new GraphQLObjectType({
     name: 'Association',
     fields: () => ({
         _id: { type: GraphQLString },
-        team_id: { type: GraphQLString }, 
+        team_id: { type: GraphQLString },
         member_id: { type: GraphQLString },
         role: { type: GraphQLString },
         team: {
@@ -95,6 +96,45 @@ const AssociationType = new GraphQLObjectType({
         }
     })
 });
+
+const ProjectType = new GraphQLObjectType({
+    name: 'Project',
+    fields: () => ({
+        _id: { type: GraphQLString },
+        name: { type: GraphQLString },
+        description: { type: GraphQLString },
+        created_by: { type: GraphQLString },
+        is_locked: { type: GraphQLBoolean },
+        plans: {
+            type: new GraphQLList(PlanType),
+            resolve(parent, args){
+                return Plan.find({project_id: parent._id});
+            }
+        },
+    })
+})
+
+const SuccessType = new GraphQLObjectType({
+    name: 'Success',
+    fields: () => ({
+        success: {type: GraphQLBoolean}
+    })
+})
+
+const PlanType = new GraphQLObjectType({
+    name: 'Plan',
+    fields: () => ({
+        _id: { type: GraphQLString },
+        project_id: { type: GraphQLString },
+        name: { type: GraphQLString },
+        description: { type: GraphQLString },
+        created_by: { type: GraphQLString },
+        teams: { type: GraphQLString },
+        packages: { type: GraphQLString },
+        locations: { type: GraphQLString },
+        is_locked: { type: GraphQLBoolean },
+    })
+})
 
 const SendMailType = new GraphQLObjectType({
     name: 'SendMail',
@@ -132,8 +172,9 @@ const RootQuery = new GraphQLObjectType({
                     user = {
                         _id: user._id,
                         email: user.email,
-                        name: user.name, 
-                        token: token, 
+                        name: user.name,
+                        role: user.role,
+                        token: token,
                         createdAt: user.createdAt,
                         updatedAt: now
                     };
@@ -149,7 +190,7 @@ const RootQuery = new GraphQLObjectType({
         },
         login: {
             type: UserType,
-            args: { 
+            args: {
                     name: { type: GraphQLString },
                     password: { type: GraphQLString}
                 },
@@ -204,19 +245,26 @@ const RootQuery = new GraphQLObjectType({
             async resolve(parent, args){
                 return Association.find({});
             }
+        },
+        projects: {
+            type: new GraphQLList(ProjectType),
+            async resolve(parent, args){
+                return Project.find({});
+            }
         }
     }
 });
 
 const Mutation = new GraphQLObjectType({
     name: 'Mutation',
-    fields: { 
+    fields: {
         register: {
             type: UserType,
             args: {
                 email: { type: new GraphQLNonNull(GraphQLString) },
                 name: { type: new GraphQLNonNull(GraphQLString) },
-                password: { type: new GraphQLNonNull(GraphQLString) }                
+                password: { type: new GraphQLNonNull(GraphQLString) },
+                role: { type: new GraphQLNonNull(GraphQLString) }
             },
             resolve(parent, args){
 
@@ -231,6 +279,7 @@ const Mutation = new GraphQLObjectType({
                     email: args.email,
                     name: args.name,
                     password: bcrypt.hashSync(args.password, salt),
+                    role: args.role,
                     token: token,
                     createdAt: now,
                     updatedAt: now
@@ -243,8 +292,8 @@ const Mutation = new GraphQLObjectType({
             args: {
                 email: { type: new GraphQLNonNull(GraphQLString) },
                 name: { type: new GraphQLNonNull(GraphQLString) },
-                password: { type: new GraphQLNonNull(GraphQLString) },           
-                member_id: { type: new GraphQLNonNull(GraphQLString) }          
+                password: { type: new GraphQLNonNull(GraphQLString) },
+                member_id: { type: new GraphQLNonNull(GraphQLString) }
             },
             resolve(parent, args){
 
@@ -270,7 +319,7 @@ const Mutation = new GraphQLObjectType({
                 return user.save();
             }
         },
-        add_project_attribute: { 
+        add_project_attribute: {
             type: ProjectAttributeType,
             args: {
                 attribute_name: { type: GraphQLString },
@@ -339,6 +388,113 @@ const Mutation = new GraphQLObjectType({
                     role: args.role
                 })
                 return association.save();
+            }
+        },
+        add_project: {
+            type: ProjectType,
+            args: {
+                name: { type: GraphQLString },
+                description: { type: GraphQLString },
+                created_by: { type: GraphQLString },
+                is_locked: { type: GraphQLBoolean }
+            },
+            resolve(parent, args){
+                let project = new Project({
+                    name: args.name,
+                    description: args.description,
+                    created_by: args.created_by,
+                    is_locked: args.is_locked
+                })
+                return project.save();
+            }
+        },
+        update_project: {
+            type: ProjectType,
+            args: {
+                _id: { type: GraphQLString },
+                name: { type: GraphQLString },
+                description: { type: GraphQLString },
+                created_by: { type: GraphQLString },
+                is_locked: { type: GraphQLBoolean }
+            },
+            async resolve(parent, args){
+                let project = await Project.findById(args._id);
+                project.name = args.name;
+                project.description = args.description;
+                project.created_by = args.created_by;
+                project.is_locked = args.is_locke;
+                return project.save();
+            }
+        },
+        delete_project: {
+            type: SuccessType,
+            args: {
+                _id: { type: GraphQLString }
+            },
+            async resolve(parent, args){
+                await Project.findByIdAndDelete(args._id);
+                await Plan.deleteMany({project_id: args._id});
+                return {success: true};
+            }
+        },
+        add_plan: {
+            type: PlanType,
+            args: {
+                project_id: { type: GraphQLString },
+                name: { type: GraphQLString },
+                description: { type: GraphQLString },
+                created_by: { type: GraphQLString },
+                teams: { type: GraphQLString },
+                packages: { type: GraphQLString },
+                locations: { type: GraphQLString },
+                is_locked: { type: GraphQLBoolean }
+            },
+            resolve(parent, args){
+                let plan = new Plan({
+                    project_id: args.project_id,
+                    name: args.name,
+                    description: args.description,
+                    created_by: args.created_by,
+                    teams: args.teams,
+                    packages: args.packages,
+                    locations: args.locations,
+                    is_locked: args.is_locked
+                })
+                return plan.save();
+            }
+        },
+        update_plan: {
+            type: PlanType,
+            args: {
+                _id: { type: GraphQLString },
+                name: { type: GraphQLString },
+                description: { type: GraphQLString },
+                created_by: { type: GraphQLString },
+                teams: { type: GraphQLString },
+                packages: { type: GraphQLString },
+                locations: { type: GraphQLString },
+                is_locked: { type: GraphQLBoolean }
+            },
+            async resolve(parent, args){
+                let plan = await Plan.findById(args._id);
+                plan.name = args.name;
+                plan.description = args.description;
+                plan.created_by = args.created_by;
+                plan.teams = args.teams;
+                plan.packages = args.packages;
+                plan.locations = args.locations;
+                plan.is_locked = args.is_locke;
+                return plan.save();
+            }
+        },
+        delete_plan: {
+            type: SuccessType,
+            args: {
+                _id: { type: GraphQLString }
+            },
+            async resolve(parent, args){
+                await Plan.findByIdAndDelete(args._id);
+                return {success: true};
             }
         },
         send_mail:{

@@ -14,11 +14,6 @@ import NonAuthLayout from "./components/NonAuthLayout";
 // Import scss
 import "./assets/scss/theme.scss";
 
-// Import Configuration file
-import { initBackendAPI } from "./helpers/backend";
-
-initBackendAPI();
-
 class App extends Component {
   constructor(props) {
     super(props);

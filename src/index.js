@@ -6,7 +6,9 @@ import { BrowserRouter } from 'react-router-dom';
 import { Provider } from 'react-redux';
 
 import store from './store';
+import { init as appInitAction} from './store/app/actions'
 
+store.dispatch(appInitAction());
 const app = (
     <Provider store={store}>
         <BrowserRouter>

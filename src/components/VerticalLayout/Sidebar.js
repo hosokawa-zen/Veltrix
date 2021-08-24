@@ -3,6 +3,7 @@ import { withRouter, Link } from "react-router-dom";
 import MetisMenu from "metismenujs";
 
 import SimpleBar from "simplebar-react";
+import {connect} from "react-redux";
 
 const SidebarContent = props => {
   return (
@@ -11,7 +12,7 @@ const SidebarContent = props => {
 
         <li>
           <Link to="/dashboard" className="waves-effect">
-            <i className="ti-home"></i>
+            <i className="ti-home"/>
             <span>Dashboard</span>
           </Link>
         </li>
@@ -20,7 +21,7 @@ const SidebarContent = props => {
 
         <li>
           <Link to="/#" className="has-arrow waves-effect">
-            <i className="ti-view-grid"></i>
+            <i className="ti-view-grid"/>
             <span>Production Control</span>
           </Link>
           <ul className="sub-menu" aria-expanded="false">
@@ -44,7 +45,7 @@ const SidebarContent = props => {
 
         <li>
           <Link to="/#" className="has-arrow waves-effect">
-            <i className="ti-layout"></i>
+            <i className="ti-layout"/>
             <span>Project Attributes</span>
           </Link>
           <ul className="sub-menu" aria-expanded="false">
@@ -55,16 +56,32 @@ const SidebarContent = props => {
               <Link to="project-collaborators">Collaborators</Link>
             </li>
 			<li>
-              <Link to="#">Reason Codes</Link>
+              <Link to="project-collaborators">Reason Codes</Link>
             </li>
           </ul>
         </li>
-		
+
+        {
+          props.isAdmin?
+              <li>
+                <Link to="/#" className="has-arrow waves-effect">
+                  <i className="ti-user"/>
+                  <span>System Admin</span>
+                </Link>
+                <ul className="sub-menu" aria-expanded="false">
+                  <li>
+                    <Link to="user-capabilities">User Capabilities</Link>
+                  </li>
+                </ul>
+              </li>
+              :null
+        }
+
 		<li className="menu-title">Project Request</li>
-		
+
 		<li>
           <Link to="/#" className="has-arrow waves-effect">
-            <i className="ti-package"></i>
+            <i className="ti-package"/>
             <span>Digital Design</span>
           </Link>
           <ul className="sub-menu" aria-expanded="false">
@@ -141,18 +158,26 @@ class Sidebar extends Component {
   };
 
   render() {
+    const { user } = this.props;
+    const isAdmin = user && user.role === 'admin';
     return (
       <React.Fragment>
         {this.props.type !== "condensed" ? (
           <SimpleBar style={{ maxHeight: "100%" }}>
-            <SidebarContent />
+            <SidebarContent isAdmin={isAdmin} />
           </SimpleBar>
         ) : (
-          <SidebarContent />
+          <SidebarContent isAdmin={isAdmin} />
         )}
       </React.Fragment>
     );
   }
 }
 
-export default withRouter(Sidebar);
+const mapStateToProps = state => {
+  return {
+    user: state.Login.user
+  }
+}
+
+export default connect(mapStateToProps, null)(withRouter(Sidebar));

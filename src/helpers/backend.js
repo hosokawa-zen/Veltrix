@@ -1,39 +1,43 @@
 import { getCall, postCall } from "../apiCall";
 
 class BackendAPI {
-  constructor() {
-      let token = localStorage.getItem("token");
-      console.log('session token', token);
-      if(!token) return;
-      getCall(
-        `{
-          me(token: "${token}"){
-            _id,
-            email,
-            name,
-            token
-          }
-        }`, 
-        (res) => {
-          if (res.me) {
-            localStorage.setItem("token", res.me.token);
-            localStorage.setItem("authUser", JSON.stringify(res.me));
-          } else {
-            localStorage.removeItem("authUser");
-          }
-        });
+  fetchUser = (token) => {
+      return new Promise((resolve, reject) => {
+          getCall(`{
+                  me(token: "${token}"){
+                    _id,
+                    email,
+                    name,
+                    role,
+                    token
+                  }
+                }`,
+              (res) => {
+                  if (res.me) {
+                      localStorage.setItem("token", res.me.token);
+                      localStorage.setItem("authUser", JSON.stringify(res.me));
+                      resolve(res.me);
+                  } else {
+                      localStorage.removeItem("authUser");
+                      reject("Fetch Failed");
+                  }
+              },
+              error => {
+                  reject(this._handleError(error));
+              });
+      });
   }
-
   /**
    * Registers the user with given details
    */
-  registerUser = (email, name, password) => {
+  registerUser = (email, name, password, role) => {
     return new Promise((resolve, reject) => {
       postCall(`mutation{
-        register(email:"${email}", name:"${name}", password: "${password}"){
+        register(email:"${email}", name:"${name}", password: "${password}", role: "${role}"){
             _id,
             email,
             name,
+            role,
             token
         }
     }`,
@@ -41,7 +45,7 @@ class BackendAPI {
             if(res.register._id){
               resolve(res.register);
             } else {
-              reject("Resiger Failed");
+              reject("Register Failed");
             }
           },
           error => {
@@ -88,6 +92,7 @@ class BackendAPI {
           _id,
           email,
           name,
+          role,
           token
          }
         }`,(user) => {
@@ -370,7 +375,7 @@ class BackendAPI {
   }
 
   /**
-   * Add Member
+   * Add Association
    */
 
    addAssociation = (team_id, member_id, role) => {
@@ -404,7 +409,268 @@ class BackendAPI {
      });
    }
 
-  /**
+    /**
+     * Return All Projects
+     */
+    getProjects = () => {
+        return new Promise((resolve, reject) => {
+            getCall(`{
+        projects{
+          _id,
+          name,
+          description,
+          created_by,
+          is_locked,
+          plans{
+            _id,
+            project_id,
+            name,
+            description,
+            created_by,
+            teams,
+            packages,
+            locations,
+            is_locked
+          }
+         }
+        }`,(res) => {
+                    if(res.projects){
+                        resolve(res.projects);
+                    }
+                },
+                error => {
+                    reject(this._handleError(error));
+                }
+            );
+        });
+    }
+
+    /**
+     * Add Project
+     */
+
+    addProject = ({name, description, created_by, is_locked}) => {
+        return new Promise((resolve, reject) => {
+            postCall(`mutation{
+        add_project(name:"${name}", description:"${description}", created_by: "${created_by}", is_locked: ${is_locked}){
+            _id,
+            name,
+            description,
+            created_by,
+            is_locked,
+            plans{
+                _id,
+                project_id,
+                name,
+                description,
+                created_by,
+                teams,
+                packages,
+                locations,
+                is_locked
+              }
+        }
+      }`,
+                (res) => {
+                    if(res.add_project._id){
+                        resolve(res.add_project);
+                    } else {
+                        reject("Add Project Failed");
+                    }
+                },
+                error => {
+                    reject(this._handleError(error));
+                }
+            );
+        });
+    }
+
+    /**
+     * Update Project
+     */
+
+    updateProject = ({_id, name, description, created_by, is_locked}) => {
+        return new Promise((resolve, reject) => {
+            postCall(`mutation{
+        update_project(_id: "${_id}", name:"${name}", description:"${description}", created_by: "${created_by}", is_locked: ${is_locked}){
+            _id,
+            name,
+            description,
+            created_by,
+            is_locked,
+            plans{
+                _id,
+                project_id,
+                name,
+                description,
+                created_by,
+                teams,
+                packages,
+                locations,
+                is_locked
+              }
+            }
+          }`,
+                (res) => {
+                    if(res.update_project._id){
+                        resolve(res.update_project);
+                    } else {
+                        reject("Update Project Failed");
+                    }
+                },
+                error => {
+                    reject(this._handleError(error));
+                }
+            );
+        });
+    }
+
+    /**
+     * Delete Project
+     */
+
+    deleteProject = (_id) => {
+        return new Promise((resolve, reject) => {
+            postCall(`mutation{
+        delete_project(_id: "${_id}"){
+            success
+        }
+      }`,
+                (res) => {
+                    if(res.delete_project.success){
+                        resolve(true);
+                    } else {
+                        reject("Delete Project Failed");
+                    }
+                },
+                error => {
+                    reject(this._handleError(error));
+                }
+            );
+        });
+    }
+
+
+    /**
+     * Return All Plans
+     */
+    getPlans = () => {
+        return new Promise((resolve, reject) => {
+            getCall(`{
+        plans{
+          _id,
+          project_id,
+          name,
+          description,
+          created_by,
+          teams,
+          packages,
+          locations,
+          is_locked
+         }
+        }`,(res) => {
+                    if(res.plans){
+                        resolve(res.plans);
+                    }
+                },
+                error => {
+                    reject(this._handleError(error));
+                }
+            );
+        });
+    }
+
+    /**
+     * Add Plan
+     */
+
+    addPlan = ({project_id, name, description, created_by, teams, packages, locations, is_locked}) => {
+        return new Promise((resolve, reject) => {
+            postCall(`mutation{
+        add_plan(project_id:"${project_id}", name:"${name}", description:"${description}", created_by: "${created_by}", teams: "${teams}", packages: "${packages}", locations: "${locations}", is_locked: ${is_locked}){
+            _id,
+            project_id,
+            name,
+            description,
+            created_by,
+            teams,
+            packages,
+            locations,
+            is_locked
+        }
+      }`,
+                (res) => {
+                    if(res.add_plan._id){
+                        resolve(res.add_plan);
+                    } else {
+                        reject("Add Plan Failed");
+                    }
+                },
+                error => {
+                    reject(this._handleError(error));
+                }
+            );
+        });
+    }
+
+    /**
+     * Update Plan
+     */
+
+    updatePlan = ({_id, name, description, created_by, teams, packages, locations, is_locked}) => {
+        return new Promise((resolve, reject) => {
+            postCall(`mutation{
+        update_plan(_id: "${_id}", name:"${name}", description:"${description}", created_by: "${created_by}", teams: "${teams}", packages: "${packages}", locations: "${locations}", is_locked: ${is_locked}){
+            _id,
+            project_id,
+            name,
+            description,
+            created_by,
+            teams,
+            packages,
+            locations,
+            is_locked
+        }
+      }`,
+                (res) => {
+                    if(res.update_plan._id){
+                        resolve(res.update_plan);
+                    } else {
+                        reject("Update Plan Failed");
+                    }
+                },
+                error => {
+                    reject(this._handleError(error));
+                }
+            );
+        });
+    }
+
+    /**
+     * Delete Plan
+     */
+
+    deletePlan = (_id) => {
+        return new Promise((resolve, reject) => {
+            postCall(`mutation{
+        delete_plan(_id: "${_id}"){
+            success
+        }
+      }`,
+                (res) => {
+                    if(res.delete_plan.success){
+                        resolve(true);
+                    } else {
+                        reject("Delete Plan Failed");
+                    }
+                },
+                error => {
+                    reject(this._handleError(error));
+                }
+            );
+        });
+    }
+    /**
    * Handle the error
    * @param {*} error
    */

@@ -1,5 +1,7 @@
 import { combineReducers } from "redux";
 
+// App
+import App from "./app/reducer";
 // Front
 import Layout from "./layout/reducer";
 
@@ -9,7 +11,7 @@ import Account from "./auth/register/reducer";
 import ForgetPassword from "./auth/forgetpwd/reducer";
 
 const rootReducer = combineReducers({
-  // public
+  App,
   Layout,
   Login,
   Account,
