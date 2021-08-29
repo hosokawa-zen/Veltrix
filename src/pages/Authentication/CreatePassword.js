@@ -11,7 +11,7 @@ class CreatePassword extends Component {
   constructor(props) {
     super(props);
     const { history, location } = props;
-    
+
     let id = location.search.replace("?id=", "");
     if(!id || !id.length){
       history.push('/login');

@@ -1,5 +1,4 @@
 import React, { Component } from "react";
-import SettingMenu from "../Shared/SettingMenu";
 import { Row, Col, Label, Input, Button } from "reactstrap";
 import { Link } from "react-router-dom";
 import { getBackendAPI } from "../../helpers/backend";
@@ -47,7 +46,7 @@ class ProjectAttributesPage extends Component {
     let package_handle_text = document.getElementById('package_handle').value.trim();
 
     if(package_name_text.length && package_handle_text.length){
-      if(workPackages.find(workPackage => workPackage.tag_name === package_name_text)){
+      if(workPackages.find(workPackage => workPackage.tag_name === package_name_text) || workPackages.find(workPackage => workPackage.handle === package_handle_text)){
         return;
       }
       try{
@@ -65,11 +64,11 @@ class ProjectAttributesPage extends Component {
   addLocationTag = async() => {
     const { locationTags } = this.state;
     let newLocationTags = locationTags;
-    let location_name_text = document.getElementById('location_name').value;
-    let location_handle_text = document.getElementById('location_handle').value;
+    let location_name_text = document.getElementById('location_name').value.trim();
+    let location_handle_text = document.getElementById('location_handle').value.trim();
 
     if(location_name_text.trim().length && location_handle_text.trim().length){
-      if(locationTags.find(location_tag => location_tag.tag_name === location_name_text)){
+      if(locationTags.find(location_tag => location_tag.tag_name === location_name_text) || locationTags.find(location_tag => location_tag.handle === location_handle_text)){
         return;
       }
       try{
@@ -87,11 +86,11 @@ class ProjectAttributesPage extends Component {
   addDisciplineTag = async() => {
     const { disciplineTags } = this.state;
     let newDisciplineTags = disciplineTags;
-    let discipline_name_text = document.getElementById('discipline_name').value;
-    let discipline_handle_text = document.getElementById('discipline_handle').value;
+    let discipline_name_text = document.getElementById('discipline_name').value.trim();
+    let discipline_handle_text = document.getElementById('discipline_handle').value.trim();
 
     if(discipline_name_text.trim().length && discipline_handle_text.trim().length){
-      if(disciplineTags.find(disciplineTag => disciplineTag.tag_name === discipline_name_text)){
+      if(disciplineTags.find(disciplineTag => disciplineTag.tag_name === discipline_name_text) || disciplineTags.find(disciplineTag => disciplineTag.handle === discipline_handle_text)){
         return;
       }
       try{
@@ -189,10 +188,10 @@ class ProjectAttributesPage extends Component {
 
                             <Col lg="6" className="form-group">
                               <Label for="handle">Handle</Label>
-                              <Input 
+                              <Input
                                 ref={(r) => this.package_handle=r}
-                                type="text" 
-                                id="package_handle" 
+                                type="text"
+                                id="package_handle"
                                 name="package_handle"
                                 />
                             </Col>
@@ -280,10 +279,10 @@ class ProjectAttributesPage extends Component {
 
                             <Col lg="6" className="form-group">
                               <Label for="handle">Handle</Label>
-                              <Input 
+                              <Input
                                 ref={(r) => this.discipline_handle=r}
-                                type="text" 
-                                id="discipline_handle" 
+                                type="text"
+                                id="discipline_handle"
                                 name="discipline_handle"
                                 />
                             </Col>
@@ -373,10 +372,10 @@ class ProjectAttributesPage extends Component {
 
                         <Col lg="6" className="form-group">
                           <Label for="handle">Handle</Label>
-                          <Input 
+                          <Input
                             ref={(r) => this.location_handle=r}
-                            type="text" 
-                            id="location_handle" 
+                            type="text"
+                            id="location_handle"
                             name="location_handle"
                             />
                         </Col>

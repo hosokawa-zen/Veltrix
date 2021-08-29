@@ -26,7 +26,7 @@ class Login extends Component {
     const { loginUser, history } = this.props;
     let username = document.getElementById('username').value;
     let userpassword = document.getElementById('userpassword').value;
-    if(username.trim().length && userpassword.trim().length){
+    if(username.trim().length && userpassword.length){
       loginUser({name: username, password: userpassword}, history);
     }
     e.preventDefault();

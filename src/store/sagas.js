@@ -6,6 +6,7 @@ import AccountSaga from './auth/register/saga';
 import AuthSaga from './auth/login/saga';
 import ForgetSaga from './auth/forgetpwd/saga';
 import LayoutSaga from './layout/saga';
+import ProjectSaga from './projects/saga';
 
 
 export default function* rootSaga() {
@@ -14,6 +15,7 @@ export default function* rootSaga() {
         AccountSaga(),
         AuthSaga(),
         ForgetSaga(),
-        LayoutSaga()
+        LayoutSaga(),
+        ProjectSaga(),
     ])
 }

@@ -1,5 +1,6 @@
 import React from "react";
 import {getBackendAPI} from "../../../helpers/backend";
+import {connect} from "react-redux";
 
 
 class Plan extends React.Component {
@@ -13,16 +14,13 @@ class Plan extends React.Component {
             project_id: projectId,
             name: plan.name??'',
             description: plan.description??'',
-            created_by: plan.created_by??'',
-            teams: plan.teams??'',
-            packages: plan.packages??'',
-            locations: plan.locations??'',
             isLocked: plan.is_locked??false,
         };
     }
 
     onSave = async () => {
-        const {name, description, created_by, teams, packages, locations, project_id} = this.state;
+        const {user} = this.props;
+        const {name, description, project_id} = this.state;
 
         if(!name.trim().length || !project_id){
             return;
@@ -31,10 +29,10 @@ class Plan extends React.Component {
         try{
             let plan = null;
             if(!this.props.plan._id){
-                const newPlan = {project_id, name, description, created_by, teams, packages, locations, is_locked: false};
+                const newPlan = {project_id, name, description, created_by_id: user._id, teams: '', packages: '', locations: '', is_locked: false};
                 plan = await getBackendAPI().addPlan(newPlan);
             } else {
-                const newPlan = {_id: this.props.plan._id, project_id, name, description, created_by, teams, packages, locations, is_locked: false};
+                const newPlan = {_id: this.props.plan._id, project_id, name, description, created_by_id: user._id, teams: '', packages: '', locations: '', is_locked: false};
                 plan = await getBackendAPI().updatePlan(newPlan);
             }
             this.setState({isEditing: false});
@@ -71,24 +69,14 @@ class Plan extends React.Component {
 
     onLock = async () => {
         const {plan} = this.props;
-        try {
-            const newPlan = await getBackendAPI().updatePlan({...plan, is_locked: true});
-            this.props.onSave(newPlan);
-            this.setState({isLocked: true});
-        } catch (e) {
-
-        }
+        const newPlan = {...plan, is_locked: true};
+        this.props.onToggleLock(newPlan);
     }
 
     onUnlock = async () => {
         const {plan} = this.props;
-        try {
-            const newPlan = await getBackendAPI().updatePlan({...plan, is_locked: false});
-            this.props.onSave(newPlan);
-            this.setState({isLocked: false});
-        } catch (e) {
-
-        }
+        const newPlan = {...plan, is_locked: false};
+        this.props.onToggleLock(newPlan);
     }
 
     onDelete = async () => {
@@ -108,8 +96,9 @@ class Plan extends React.Component {
     }
 
     render (){
-        const { plan } = this.props;
-        const { isEditing, name, description, created_by, teams, packages, locations, isLocked } = this.state;
+        const { plan, user, isLocked } = this.props;
+        const { isEditing, name, description } = this.state;
+        const canEdit = user._id === plan.created_by_id;
 
         if(isLocked){
             return (
@@ -118,17 +107,21 @@ class Plan extends React.Component {
                         {plan.name}
                     </div>
                     <div className="plan-content d-flex flex-column">
-                        <div className="flex-grow-1 align-items-center d-flex justify-content-center">
+                        <div className="flex-grow-1 align-items-center d-flex justify-content-center my-2">
                             <i className="ti-lock plan-lock"/>
                         </div>
-                        <div className="form-group btn-container">
-                            <button
-                                className="btn btn-primary w-md waves-effect waves-light mx-2"
-                                onClick={this.onUnlock}
-                            >
-                                Unlock
-                            </button>
-                        </div>
+                        {
+                            canEdit?
+                            <div className="form-group btn-container mt-2">
+                                <button
+                                    className="btn btn-primary w-md waves-effect waves-light mx-2"
+                                    onClick={this.onUnlock}
+                                >
+                                    Unlock
+                                </button>
+                            </div>
+                            : null
+                        }
                     </div>
                 </div>
             );
@@ -164,64 +157,57 @@ class Plan extends React.Component {
                                 placeholder="Enter Description"
                             />
                         </div>
-                        <div className="form-group">
-                            <label htmlFor="created_by">Created By</label>
-                            <input
-                                type="text"
-                                className="form-control"
-                                id="created_by"
-                                value={created_by}
-                                onChange={(event) => this.setState({created_by: event.target.value})}
-                                placeholder="Enter Creator"
-                            />
-                        </div>
-                        <div className="form-group">
-                            <label htmlFor="created_by">Teams</label>
-                            <input
-                                type="text"
-                                className="form-control"
-                                id="teams"
-                                value={teams}
-                                onChange={(event) => this.setState({teams: event.target.value})}
-                                placeholder="Enter Teams"
-                            />
-                        </div>
-                        <div className="form-group">
-                            <label htmlFor="packages">Work Packages</label>
-                            <input
-                                type="text"
-                                className="form-control"
-                                id="packages"
-                                value={packages}
-                                onChange={(event) => this.setState({packages: event.target.value})}
-                                placeholder="Enter Packages"
-                            />
-                        </div>
-                        <div className="form-group">
-                            <label htmlFor="locations">Locations</label>
-                            <input
-                                type="text"
-                                className="form-control"
-                                id="locations"
-                                value={locations}
-                                onChange={(event) => this.setState({locations: event.target.value})}
-                                placeholder="Enter Locations"
-                            />
-                        </div>
-                        <div className="form-group btn-container">
-                            <button
-                                className="btn btn-primary w-md waves-effect waves-light mx-2"
-                                onClick={this.onSave}
-                            >
-                                Save
-                            </button>
-                            <button
-                                className="btn btn-primary w-md waves-effect waves-light"
-                                onClick={this.onCancel}
-                            >
-                                Cancel
-                            </button>
-                        </div>
+                        {/*<div className="form-group">*/}
+                        {/*    <label htmlFor="created_by">Teams</label>*/}
+                        {/*    <input*/}
+                        {/*        type="text"*/}
+                        {/*        className="form-control"*/}
+                        {/*        id="teams"*/}
+                        {/*        value={teams}*/}
+                        {/*        onChange={(event) => this.setState({teams: event.target.value})}*/}
+                        {/*        placeholder="Enter Teams"*/}
+                        {/*    />*/}
+                        {/*</div>*/}
+                        {/*<div className="form-group">*/}
+                        {/*    <label htmlFor="packages">Work Packages</label>*/}
+                        {/*    <input*/}
+                        {/*        type="text"*/}
+                        {/*        className="form-control"*/}
+                        {/*        id="packages"*/}
+                        {/*        value={packages}*/}
+                        {/*        onChange={(event) => this.setState({packages: event.target.value})}*/}
+                        {/*        placeholder="Enter Packages"*/}
+                        {/*    />*/}
+                        {/*</div>*/}
+                        {/*<div className="form-group">*/}
+                        {/*    <label htmlFor="locations">Locations</label>*/}
+                        {/*    <input*/}
+                        {/*        type="text"*/}
+                        {/*        className="form-control"*/}
+                        {/*        id="locations"*/}
+                        {/*        value={locations}*/}
+                        {/*        onChange={(event) => this.setState({locations: event.target.value})}*/}
+                        {/*        placeholder="Enter Locations"*/}
+                        {/*    />*/}
+                        {/*</div>*/}
+                        {
+                            canEdit?
+                                <div className="form-group btn-container">
+                                    <button
+                                        className="btn btn-primary w-md waves-effect waves-light mx-2"
+                                        onClick={this.onSave}
+                                    >
+                                        Save
+                                    </button>
+                                    <button
+                                        className="btn btn-secondary w-md waves-effect waves-light"
+                                        onClick={this.onCancel}
+                                    >
+                                        Cancel
+                                    </button>
+                                </div>
+                                :null
+                        }
                     </form>
                 </div>
                     :
@@ -233,42 +219,67 @@ class Plan extends React.Component {
 
                     <div className="form-group flex-grow-1">
                         <label className="form-label">Created By:</label>
-                        <label>{plan.created_by}</label>
+                        <label>{plan.created_by.name}</label>
                     </div>
-                    <div className="btn-container mb-2">
-                        <div className="mb-2">
-                            <button
-                                className="btn btn-outline-dark w-md waves-effect waves-light mx-2"
-                                onClick={this.onDuplicate}
-                            >
-                                Duplicate
-                            </button>
-                            <button
-                                className="btn btn-outline-dark w-md waves-effect waves-light"
-                                onClick={this.onEdit}
-                            >
-                                Edit
-                            </button>
-                        </div>
-                        <div>
-                            <button
-                                className="btn btn-outline-dark w-md waves-effect waves-light mx-2"
-                                onClick={this.onLock}
-                            >
-                                Lock
-                            </button>
-                            <button
-                                className="btn btn-danger w-md waves-effect waves-light"
-                                onClick={this.onDelete}
-                            >
-                                Delete
-                            </button>
-                        </div>
+
+                    <div className="form-group flex-grow-1">
+                        <label className="form-label">Teams:</label>
+                        <label>{plan.teams}</label>
                     </div>
+
+                    <div className="form-group flex-grow-1">
+                        <label className="form-label">Work Packages:</label>
+                        <label>{plan.packages}</label>
+                    </div>
+
+                    <div className="form-group flex-grow-1">
+                        <label className="form-label">Locations:</label>
+                        <label>{plan.locations}</label>
+                    </div>
+                    {
+                        canEdit?
+                            <div className="btn-container mb-2">
+                                <div className="mb-2">
+                                    <button
+                                        className="btn btn-primary w-md waves-effect waves-light"
+                                        onClick={this.onEdit}
+                                    >
+                                        Edit
+                                    </button>
+                                    <button
+                                        className="btn btn-outline-dark w-md waves-effect waves-light mx-2"
+                                        onClick={this.onLock}
+                                    >
+                                        Lock
+                                    </button>
+                                </div>
+                                {/*<div>*/}
+                                {/*    <button*/}
+                                {/*        className="btn btn-outline-dark w-md waves-effect waves-light mx-2"*/}
+                                {/*        onClick={this.onDuplicate}*/}
+                                {/*    >*/}
+                                {/*        Duplicate*/}
+                                {/*    </button>*/}
+                                {/*    <button*/}
+                                {/*        className="btn btn-danger w-md waves-effect waves-light"*/}
+                                {/*        onClick={this.onDelete}*/}
+                                {/*    >*/}
+                                {/*        Delete*/}
+                                {/*    </button>*/}
+                                {/*</div>*/}
+                            </div>
+                            :null
+                    }
                 </div>
             }
         </div>);
     }
 }
 
-export default Plan;
+const mapStateToProps = state => {
+    return {
+        user: state.Login.user
+    }
+}
+
+export default connect(mapStateToProps, null)(Plan);

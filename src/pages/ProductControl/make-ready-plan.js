@@ -1,9 +1,12 @@
 import React, { Component } from "react";
-import {Row, Col, Button} from "reactstrap";
+import {Row, Col, Button, Modal} from "reactstrap";
 import { Link } from "react-router-dom";
 import Project from "./components/project";
 import Plan from "./components/plan";
 import {getBackendAPI} from "../../helpers/backend";
+import {connect} from "react-redux";
+import {setEnableAdding as setEnableAddingAction} from "../../store/projects/actions";
+import { toast } from 'react-toastify';
 
 class MakeReadyPlanPage extends Component {
   constructor(props) {
@@ -11,9 +14,13 @@ class MakeReadyPlanPage extends Component {
     this.state = {
       newProject: null,
       projects: [],
-      selectProjectId: null,
+      selectProject: null,
       newPlan: null,
-      plans: []
+      plans: [],
+      openPassConfirmDlg: false,
+      isEnablingAddProjects: false,
+      toggleLock: null,
+      togglePlanLock: null,
     };
   }
 
@@ -27,8 +34,13 @@ class MakeReadyPlanPage extends Component {
   }
 
   addNewProject = () => {
-    const newProject = {_id: null, name: '', description: '', created_by: '', is_locked: false};
-    this.setState({newProject: newProject})
+    if(this.props.isEnabledAdding){
+      const newProject = {_id: null, name: '', description: '', created_by_id: this.props.user._id, is_locked: false};
+      this.setState({newProject: newProject})
+    } else {
+      this.setState({isEnablingAddProjects: true});
+      this.onConfirmPassword();
+    }
   }
 
   onDuplicateProject = (_id) => {
@@ -41,8 +53,8 @@ class MakeReadyPlanPage extends Component {
 
   onDeleteProject = (_id) => {
     const projects = this.state.projects.filter(p => p._id !== _id);
-    if(this.state.selectProjectId === _id){
-      this.setState({projects, selectProjectId: null});
+    if(this.state.selectProject._id === _id){
+      this.setState({projects, selectProject: null});
     } else {
       this.setState({projects});
     }
@@ -59,7 +71,7 @@ class MakeReadyPlanPage extends Component {
   }
 
   addNewPlan = () => {
-    const newPlan = {_id: null, name: '', description: '', created_by: '', teams: '', packages: '', locations: '', is_locked: false};
+    const newPlan = {_id: null, name: '', description: '', created_by: '', teams: '', packages: '', locations: '', created_by_id: this.props.user._id, is_locked: false};
     this.setState({newPlan})
   }
 
@@ -87,11 +99,72 @@ class MakeReadyPlanPage extends Component {
   }
 
   onSelect = (project) => {
-    this.setState({selectProjectId: project._id, plans: project.plans??[]});
+    this.setState({selectProject: project, plans: project.plans??[]});
+  }
+
+
+  onConfirmPassword = () => {
+    this.setState({openPassConfirmDlg: true});
+  }
+
+  confirmPassword = async () => {
+    const {user} = this.props;
+    let password = document.getElementById('password').value;
+    try {
+      const res = await getBackendAPI().checkPass({name: user.name, password: password});
+      this.setState({openPassConfirmDlg: false});
+      console.log('success', res);
+      if(res.success){
+        if(this.state.isEnablingAddProjects){
+          this.props.setEnableAdding(true);
+        } else if(this.state.toggleLock){
+          await this.onLockProject();
+        } else if(this.state.togglePlanLock){
+          await this.onLockPlan();
+        }
+        this.setState({openPassConfirmDlg: false, isEnablingAddProjects: false});
+      } else {
+        toast.error("Password is not invalid!", {hideProgressBar: true});
+      }
+    } catch (e) {
+      toast.error("Password is not invalid!", {hideProgressBar: true});
+    }
+  }
+
+  onToggleLock = (project) => {
+    this.setState({toggleLock: project});
+    this.onConfirmPassword();
+  }
+
+  onTogglePlanLock = (plan) => {
+    this.setState({togglePlanLock: plan});
+    this.onConfirmPassword();
+  }
+
+  onLockProject = async () => {
+    if(!this.state.toggleLock) return;
+    try {
+      const newProject = await getBackendAPI().updateProject({...this.state.toggleLock});
+      this.onSaveProject(newProject);
+    } catch (e) {
+    }
+    this.setState({openPassConfirmDlg: false, toggleLock: null});
+  }
+
+  onLockPlan = async () => {
+    if(!this.state.togglePlanLock) return;
+    try {
+      const newPlan = await getBackendAPI().updatePlan({...this.state.togglePlanLock});
+      this.onSavePlan(newPlan);
+    } catch (e) {
+    }
+    this.setState({openPassConfirmDlg: false, toggleLock: null});
   }
 
   render() {
-    const {projects, plans, newProject, newPlan, selectProjectId} = this.state;
+    const {isEnabledAdding, user} = this.props;
+    const {projects, plans, newProject, newPlan, selectProject} = this.state;
+    const canEdit = selectProject && user._id === selectProject.created_by_id;
 
     return (
       <React.Fragment>
@@ -116,7 +189,7 @@ class MakeReadyPlanPage extends Component {
                 <div className="section-title">Sub Project</div>
                 <Button
                     color="primary"
-                    className="btn btn-primary waves-effect waves-light"
+                    className={(isEnabledAdding?'btn-primary':'btn-secondary') + " btn waves-effect waves-light"}
                     onClick={this.addNewProject}
                 >
                   Add a new Sub Project
@@ -140,23 +213,26 @@ class MakeReadyPlanPage extends Component {
                         <Project
                           key={p._id}
                           project={p}
-                          isSelected={p._id === selectProjectId}
+                          isLocked={p.is_locked}
+                          isSelected={selectProject && p._id === selectProject._id}
                           onSelect={() => this.onSelect(p)}
                           onDelete={() => this.onDeleteProject(p._id)}
                           onDuplicate={() => this.onDuplicateProject(p._id)}
                           onSave={(p) => this.onSaveProject(p)}
+                          onToggleLock={(p) => this.onToggleLock(p)}
                         />)
                   }
                 </div>
               </Col>
             </Row>
             {
-              selectProjectId?
+              selectProject?
                 <Row className="section-phase">
                   <Col sm={12}>
                     <Button
                         color="primary"
-                        className="btn btn-primary waves-effect waves-light"
+                        className={(canEdit?'btn-primary ':'btn-secondary ') + "btn waves-effect waves-light"}
+                        disabled={!canEdit}
                         onClick={this.addNewPlan}
                     >
                       Add a new Phase Plan
@@ -166,7 +242,7 @@ class MakeReadyPlanPage extends Component {
                         newPlan?
                             <Plan
                                 key={'new'}
-                                projectId={selectProjectId}
+                                projectId={selectProject._id}
                                 plan={newPlan}
                                 onDelete={() => this.setState({newPlan: null})}
                                 onSave={(p) => {
@@ -180,11 +256,13 @@ class MakeReadyPlanPage extends Component {
                         plans.map(p =>
                             <Plan
                               key={p._id}
-                              projectId={selectProjectId}
+                              projectId={selectProject._id}
                               plan={p}
+                              isLocked={p.is_locked}
                               onDelete={() => this.onDeletePlan(p._id)}
                               onDuplicate={() => this.onDuplicatePlan(p._id)}
                               onSave={(p) => this.onSavePlan(p)}
+                              onToggleLock={(p) => this.onTogglePlanLock(p)}
                         />)
                       }
                     </div>
@@ -193,10 +271,61 @@ class MakeReadyPlanPage extends Component {
                   :null
             }
           </div>
+
+          <Modal
+              isOpen={this.state.openPassConfirmDlg}
+              toggle={() => this.setState({openPassConfirmDlg: !this.state.openPassConfirmDlg, isEnablingAddProjects: false, isEnablingLock: false })}
+          >
+            <div className="modal-header">
+              <h5 className="modal-title mt-0" id="myModalLabel">
+                Confirm Password
+              </h5>
+              <button
+                  type="button"
+                  onClick={() =>
+                      this.setState({ openPassConfirmDlg: false })
+                  }
+                  className="close"
+                  data-dismiss="modal"
+                  aria-label="Close"
+              >
+                <span aria-hidden="true">&times;</span>
+              </button>
+            </div>
+            <div className="modal-body">
+              <h5>Please check your password!</h5>
+              <input
+                  type="password"
+                  className="form-control"
+                  id="password"
+                  placeholder="Enter password"
+              />
+            </div>
+            <div className="modal-footer">
+              <button
+                  type="button"
+                  className="btn btn-primary waves-effect waves-light"
+                  onClick={this.confirmPassword}
+              >
+                Confirm
+              </button>
+            </div>
+          </Modal>
         </div>
       </React.Fragment>
     );
   }
 }
 
-export default MakeReadyPlanPage;
+const mapStateToProps = state => {
+  return {
+    user: state.Login.user,
+    isEnabledAdding: state.Projects.isEnabledAdding
+  }
+}
+
+const mapDispatchToProps = dispatch => ({
+  setEnableAdding: (enable) => dispatch(setEnableAddingAction(enable)),
+});
+
+export default connect(mapStateToProps, mapDispatchToProps)(MakeReadyPlanPage);

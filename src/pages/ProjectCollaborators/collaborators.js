@@ -1,6 +1,5 @@
 import React, { Component } from "react";
-import SettingMenu from "../Shared/SettingMenu";
-import { Row, Col, Card, CardBody, Input, Label, Button } from "reactstrap";
+import { Row, Col, Input, Label, Button } from "reactstrap";
 import { Link } from "react-router-dom";
 import { getBackendAPI } from "../../helpers/backend";
 
@@ -22,7 +21,7 @@ class CollaboratorsPage extends Component {
     };
     this.init();
   }
-  
+
   componentDidMount() {
   }
 
@@ -50,12 +49,15 @@ class CollaboratorsPage extends Component {
   addTeam = async() => {
     const { teams } = this.state;
     let newTeams = teams;
-    let team_name_text = document.getElementById('team_name').value;
-    let team_abrv_text = document.getElementById('team_abrv').value;
-    let team_handle_text = document.getElementById('team_handle').value;
-    let team_planning_text = document.getElementById('team_planning').value;
+    let team_name_text = document.getElementById('team_name').value.trim();
+    let team_abrv_text = document.getElementById('team_abrv').value.trim();
+    let team_handle_text = document.getElementById('team_handle').value.trim();
+    let team_planning_text = document.getElementById('team_planning').value.trim();
 
     if(team_name_text.trim().length && team_abrv_text.trim().length && team_handle_text.trim().length && team_planning_text.trim().length){
+      if(teams.find(team => team.name === team_name_text) || teams.find(team => team.handle === team_handle_text)){
+        return;
+      }
       try{
         let team = await getBackendAPI().addTeam(team_name_text, team_abrv_text, team_handle_text, team_planning_text);
         newTeams.push(team);
@@ -69,13 +71,13 @@ class CollaboratorsPage extends Component {
   addTeamMember = async() => {
     const { teamMembers } = this.state;
     let newTeamMembers = teamMembers;
-    let member_first_name_text = document.getElementById('member_first_name').value;
-    let member_last_name_text = document.getElementById('member_last_name').value;
-    let member_abrv_text = document.getElementById('member_abrv').value;
-    let member_handle_text = document.getElementById('member_handle').value;
-    let member_email_text = document.getElementById('member_email').value;
+    let member_first_name_text = document.getElementById('member_first_name').value.trim();
+    let member_last_name_text = document.getElementById('member_last_name').value.trim();
+    let member_abrv_text = document.getElementById('member_abrv').value.trim();
+    let member_handle_text = document.getElementById('member_handle').value.trim();
+    let member_email_text = document.getElementById('member_email').value.trim();
 
-    if(member_first_name_text.trim().length && member_last_name_text.trim().length && member_abrv_text.trim().length && member_handle_text.trim().length && member_email_text.trim().length  && this.validateEmail(member_email_text.trim())){
+    if(member_first_name_text.length && member_last_name_text.length && member_abrv_text.length && member_handle_text.length && member_email_text.length  && this.validateEmail(member_email_text.trim())){
       try{
         let member = await getBackendAPI().addMember(member_first_name_text, member_last_name_text, member_abrv_text, member_handle_text, member_email_text);
         newTeamMembers.push(member);
@@ -86,15 +88,18 @@ class CollaboratorsPage extends Component {
     }
   }
 
-  
+
   addAssociation = async() => {
     const { associations } = this.state;
     let newAssociations = associations;
-    let team_id_text = document.getElementById('team_id_select').value;
-    let member_id_text = document.getElementById('member_id_select').value;
-    let role_text = document.getElementById('role_text_select').value;
+    let team_id_text = document.getElementById('team_id_select').value.trim();
+    let member_id_text = document.getElementById('member_id_select').value.trim();
+    let role_text = document.getElementById('role_text_select').value.trim();
 
-    if(team_id_text.trim().length && member_id_text.trim().length && role_text.trim().length){
+    if(team_id_text.length && member_id_text.length && role_text.length){
+      if(associations.find(a => a.team_id === team_id_text && a.member_id === member_id_text)){
+        return;
+      }
       try{
         let association = await getBackendAPI().addAssociation(team_id_text, member_id_text, role_text);
         newAssociations.push(association);
@@ -215,19 +220,19 @@ class CollaboratorsPage extends Component {
                         </Col>
                         <Col lg="3" className="form-group">
                           <Label for="handle">Abrv.</Label>
-                          <Input 
+                          <Input
                             ref={(r) => this.team_abrv=r}
-                            type="text" 
-                            id="team_abrv" 
+                            type="text"
+                            id="team_abrv"
                             name="team_abrv"
                             />
                         </Col>
                         <Col lg="3" className="form-group">
                           <Label for="handle">Handle</Label>
-                          <Input 
+                          <Input
                             ref={(r) => this.team_handle=r}
-                            type="text" 
-                            id="team_handle" 
+                            type="text"
+                            id="team_handle"
                             name="team_handle"
                             />
                         </Col>
@@ -337,28 +342,28 @@ class CollaboratorsPage extends Component {
                           </Col>
                           <Col lg="2" className="form-group">
                             <Label for="handle">Abrv.</Label>
-                            <Input 
+                            <Input
                               ref={(r) => this.member_abrv=r}
-                              type="text" 
-                              id="member_abrv" 
+                              type="text"
+                              id="member_abrv"
                               name="member_abrv"
                               />
                           </Col>
                           <Col lg="3" className="form-group">
                             <Label for="handle">Handle</Label>
-                            <Input 
+                            <Input
                               ref={(r) => this.member_handle=r}
-                              type="text" 
-                              id="member_handle" 
+                              type="text"
+                              id="member_handle"
                               name="member_handle"
                               />
                           </Col>
                           <Col lg="3" className="form-group">
                             <Label for="handle">Email</Label>
-                            <Input 
+                            <Input
                               ref={(r) => this.member_email=r}
-                              type="email" 
-                              id="member_email" 
+                              type="email"
+                              id="member_email"
                               name="member_email"
                               />
                           </Col>

@@ -105,6 +105,25 @@ class BackendAPI {
     });
   };
 
+    /**
+     * Login user with given details
+     */
+    checkPass = ({name, password}) => {
+        return new Promise((resolve, reject) => {
+            getCall(`{
+        check(name:"${name}", password:"${password}"){
+          success
+         }
+        }`,(res) => {
+                    resolve(res.check);
+                },
+                error => {
+                    reject(this._handleError(error));
+                }
+            );
+        });
+    };
+
   /**
    * forget Password user with given details
    */
@@ -419,14 +438,19 @@ class BackendAPI {
           _id,
           name,
           description,
-          created_by,
+          created_by_id,
+          created_by{
+            name
+          },
           is_locked,
           plans{
             _id,
-            project_id,
             name,
             description,
-            created_by,
+            created_by_id,
+            created_by{
+                name
+            },
             teams,
             packages,
             locations,
@@ -449,21 +473,26 @@ class BackendAPI {
      * Add Project
      */
 
-    addProject = ({name, description, created_by, is_locked}) => {
+    addProject = ({name, description, created_by_id, is_locked}) => {
         return new Promise((resolve, reject) => {
             postCall(`mutation{
-        add_project(name:"${name}", description:"${description}", created_by: "${created_by}", is_locked: ${is_locked}){
+        add_project(name:"${name}", description:"${description}", created_by_id: "${created_by_id}", is_locked: ${is_locked}){
             _id,
             name,
             description,
-            created_by,
+            created_by_id,
+            created_by{
+                name
+            },
             is_locked,
             plans{
                 _id,
-                project_id,
                 name,
                 description,
-                created_by,
+                created_by_id,
+                created_by{
+                    name
+                },
                 teams,
                 packages,
                 locations,
@@ -489,21 +518,26 @@ class BackendAPI {
      * Update Project
      */
 
-    updateProject = ({_id, name, description, created_by, is_locked}) => {
+    updateProject = ({_id, name, description, created_by_id, is_locked}) => {
         return new Promise((resolve, reject) => {
             postCall(`mutation{
-        update_project(_id: "${_id}", name:"${name}", description:"${description}", created_by: "${created_by}", is_locked: ${is_locked}){
+        update_project(_id: "${_id}", name:"${name}", description:"${description}", created_by_id: "${created_by_id}", is_locked: ${is_locked}){
             _id,
             name,
             description,
-            created_by,
+            created_by_id,
+            created_by{
+                name
+            },
             is_locked,
             plans{
                 _id,
-                project_id,
                 name,
                 description,
-                created_by,
+                created_by_id,
+                created_by{
+                    name
+                },
                 teams,
                 packages,
                 locations,
@@ -562,7 +596,10 @@ class BackendAPI {
           project_id,
           name,
           description,
-          created_by,
+          created_by_id,
+          created_by{
+            name
+          },
           teams,
           packages,
           locations,
@@ -584,15 +621,18 @@ class BackendAPI {
      * Add Plan
      */
 
-    addPlan = ({project_id, name, description, created_by, teams, packages, locations, is_locked}) => {
+    addPlan = ({project_id, name, description, created_by_id, teams, packages, locations, is_locked}) => {
         return new Promise((resolve, reject) => {
             postCall(`mutation{
-        add_plan(project_id:"${project_id}", name:"${name}", description:"${description}", created_by: "${created_by}", teams: "${teams}", packages: "${packages}", locations: "${locations}", is_locked: ${is_locked}){
+        add_plan(project_id:"${project_id}", name:"${name}", description:"${description}", created_by_id: "${created_by_id}", teams: "${teams}", packages: "${packages}", locations: "${locations}", is_locked: ${is_locked}){
             _id,
             project_id,
             name,
             description,
-            created_by,
+            created_by_id,
+            created_by{
+              name
+            },
             teams,
             packages,
             locations,
@@ -617,15 +657,18 @@ class BackendAPI {
      * Update Plan
      */
 
-    updatePlan = ({_id, name, description, created_by, teams, packages, locations, is_locked}) => {
+    updatePlan = ({_id, name, description, created_by_id, teams, packages, locations, is_locked}) => {
         return new Promise((resolve, reject) => {
             postCall(`mutation{
-        update_plan(_id: "${_id}", name:"${name}", description:"${description}", created_by: "${created_by}", teams: "${teams}", packages: "${packages}", locations: "${locations}", is_locked: ${is_locked}){
+        update_plan(_id: "${_id}", name:"${name}", description:"${description}", created_by_id: "${created_by_id}", teams: "${teams}", packages: "${packages}", locations: "${locations}", is_locked: ${is_locked}){
             _id,
             project_id,
             name,
             description,
-            created_by,
+            created_by_id,
+            created_by{
+                name
+            },
             teams,
             packages,
             locations,
