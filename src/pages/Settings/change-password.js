@@ -71,7 +71,7 @@ class ChangePassword extends Component {
                       <div className="form-group">
                         <label htmlFor="confirmpassword">Confirm Password</label>
                         <input
-                            type="confirm"
+                            type="password"
                             className="form-control"
                             id="confirmpassword"
                             placeholder="Enter confirm password"

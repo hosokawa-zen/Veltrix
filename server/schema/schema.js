@@ -333,7 +333,12 @@ const Mutation = new GraphQLObjectType({
                 member_id: { type: new GraphQLNonNull(GraphQLString) }
             },
             async resolve(parent, args){
-                const exist = await User.findOne({ name: args.name });
+                let exist = await User.findOne({ name: args.name });
+                if(exist){
+                    return null;
+                }
+
+                exist = await User.findOne({ email: args.email });
                 if(exist){
                     return null;
                 }
