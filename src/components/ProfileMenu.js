@@ -1,8 +1,10 @@
 
 import React, { Component } from 'react';
 import { Dropdown, DropdownToggle, DropdownMenu, DropdownItem } from 'reactstrap';
-import { withRouter, Link } from 'react-router-dom';
+import { withRouter } from 'react-router-dom';
+import {connect} from "react-redux";
 import SweetAlert from "react-bootstrap-sweetalert";
+import {logoutUser as logoutAction} from '../store/auth/login/actions';
 
 class ProfileMenu extends Component {
 
@@ -22,11 +24,10 @@ class ProfileMenu extends Component {
     }
 
     onLogout = () => {
-        const { history } = this.props;
+        const { history, logout } = this.props;
         this.setState({openLogoutDlg: false});
-        localStorage.removeItem('token');
-        localStorage.removeItem('authUser');
-        history.push('/login');
+        logout(history);
+        //history.push('/login');
     }
 
     render() {
@@ -38,7 +39,10 @@ class ProfileMenu extends Component {
                     <i className="mdi mdi-account-circle font-size-36 align-middle mr-1"></i>
                     </DropdownToggle>
                     <DropdownMenu right>
-                        <DropdownItem tag="a" href="#"><i className="mdi mdi-account-circle font-size-17 align-middle mr-1"></i>Profile</DropdownItem>
+                        <DropdownItem
+                            tag="a" href="#"
+                            onClick={(e) => this.props.history.push('/change_password')}
+                        ><i className="mdi mdi-account-circle font-size-17 align-middle mr-1"></i>Change Password</DropdownItem>
                         <div className="dropdown-divider"></div>
                         <div
                             onClick={(e) => this.setState({openLogoutDlg: true})}
@@ -47,7 +51,7 @@ class ProfileMenu extends Component {
                             <span>Logout</span>
                         </div>
                     </DropdownMenu>
-                    { openLogoutDlg ? 
+                    { openLogoutDlg ?
                         <SweetAlert
                       title="Are you sure you want to log out?"
                       warning
@@ -59,7 +63,7 @@ class ProfileMenu extends Component {
                       onCancel={() => this.setState({openLogoutDlg: false})}
                     >
                     </SweetAlert>
-                    : 
+                    :
                     null}
                 </Dropdown>
             </React.Fragment>
@@ -67,6 +71,10 @@ class ProfileMenu extends Component {
     }
 }
 
-export default withRouter(ProfileMenu);
+const mapDispatchToProps = dispatch => ({
+    logout: (params) => dispatch(logoutAction(params)),
+});
+
+export default connect(null, mapDispatchToProps)(withRouter(ProfileMenu));
 
 

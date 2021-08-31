@@ -164,7 +164,7 @@ class MakeReadyPlanPage extends Component {
   render() {
     const {isEnabledAdding, user} = this.props;
     const {projects, plans, newProject, newPlan, selectProject} = this.state;
-    const canEdit = selectProject && user._id === selectProject.created_by_id;
+    const canEdit = selectProject && (user._id === selectProject.created_by_id || user.role === 'admin');
 
     return (
       <React.Fragment>

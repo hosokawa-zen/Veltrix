@@ -360,6 +360,31 @@ const Mutation = new GraphQLObjectType({
                 return user.save();
             }
         },
+        changePassword: {
+            type: SuccessType,
+            args: {
+                _id: {type: GraphQLString},
+                oldpass: {type: GraphQLString},
+                newpass: {type: GraphQLString}
+            },
+            async resolve(parent, args){
+                let user = await User.findById(args._id);
+                if(!user){
+                    return { success: false };
+                }
+                let passwordIsValid =  bcrypt.compareSync(args.oldpass, user.password);
+
+                if(!passwordIsValid){
+                    return { success: false };
+                }
+
+                const salt = bcrypt.genSaltSync(10);
+                user.password = bcrypt.hashSync(args.newpass, salt);
+                user.save();
+
+                return { success: true };
+            }
+        },
         add_project_attribute: {
             type: ProjectAttributeType,
             args: {

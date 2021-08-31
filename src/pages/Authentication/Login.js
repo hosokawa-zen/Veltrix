@@ -9,6 +9,7 @@ import bg from "../../assets/images/bg.jpg";
 import logoDark from "../../assets/images/logo-dark.png";
 import { loginUser as loginUserAction } from "../../store/actions";
 import PropTypes from 'prop-types';
+import {toast} from "react-toastify";
 
 
 class Login extends Component {
@@ -22,11 +23,18 @@ class Login extends Component {
     this.state = {};
   }
 
+  componentDidUpdate(prevProps, prevState, snapshot) {
+    const {error} = this.props;
+    if(prevProps.error !== error && error){
+      toast.error("login failed!", {hideProgressBar: true});
+    }
+  }
+
   onLogin = (e) => {
     const { loginUser, history } = this.props;
-    let username = document.getElementById('username').value;
+    let username = document.getElementById('username').value.trim();
     let userpassword = document.getElementById('userpassword').value;
-    if(username.trim().length && userpassword.length){
+    if(username.length && userpassword.length){
       loginUser({name: username, password: userpassword}, history);
     }
     e.preventDefault();
@@ -149,8 +157,12 @@ class Login extends Component {
   }
 }
 
+const mapStateToProps = state => {
+  return {error: state.Login.error};
+}
+
 const mapDispatchToProps = dispatch => ({
   loginUser: (param1, param2) => dispatch(loginUserAction(param1, param2)),
 });
 
-export default connect(null, mapDispatchToProps)(withRouter(Login));
+export default connect(mapStateToProps, mapDispatchToProps)(withRouter(Login));

@@ -98,7 +98,7 @@ class Plan extends React.Component {
     render (){
         const { plan, user, isLocked } = this.props;
         const { isEditing, name, description } = this.state;
-        const canEdit = user._id === plan.created_by_id;
+        const canEdit = user._id === plan.created_by_id || user.role === 'admin';
 
         if(isLocked){
             return (

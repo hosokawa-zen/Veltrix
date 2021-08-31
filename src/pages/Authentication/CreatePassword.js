@@ -41,7 +41,7 @@ class CreatePassword extends Component {
     e.preventDefault();
     let username = document.getElementById('username').value;
     let userpassword = document.getElementById('userpassword').value;
-    if(userpassword.trim().length){
+    if(userpassword.length){
       try{
         await getBackendAPI().registerUserByMail(member.email, username, userpassword, member_id);
         history.push('/login');

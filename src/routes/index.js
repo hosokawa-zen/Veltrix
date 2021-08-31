@@ -28,6 +28,8 @@ import ProjectAttributes from "../pages/ProjectAttributes/project-attributes";
 import ProjectCollaborators from "../pages/ProjectCollaborators/collaborators";
 import UserCapabilities from "../pages/Admin/user-capabilities";
 
+// Setting
+import ChangePassword from "../pages/Settings/change-password"
 
 const authProtectedRoutes = [
   // Product Control
@@ -51,6 +53,10 @@ const authProtectedRoutes = [
 
   // Dashboard
   { path: "/dashboard", component: Dashboard },
+
+  // Setting
+  { path: "/change_password", component: ChangePassword },
+
   { path: "/", exact: true, component: () => <Redirect to="/dashboard" /> },
 ];
 

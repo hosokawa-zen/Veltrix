@@ -16,11 +16,11 @@ class Register extends Component {
   onRegister = async(e) => {
     const { history } = this.props;
     e.preventDefault();
-    let useremail = document.getElementById('useremail').value;
-    let username = document.getElementById('username').value;
+    let useremail = document.getElementById('useremail').value.trim();
+    let username = document.getElementById('username').value.trim();
     let userpassword = document.getElementById('userpassword').value;
     let role = 'user';
-    if(useremail.trim().length && this.validateEmail(useremail) && username.trim().length && userpassword.trim().length){
+    if(useremail.length && this.validateEmail(useremail) && username.length && userpassword.length){
       try{
         await getBackendAPI().registerUser(useremail, username, userpassword, role);
         history.push('/login');

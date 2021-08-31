@@ -89,7 +89,7 @@ class Project extends React.Component {
     render (){
         const { project, isSelected, isLocked, user } = this.props;
         const { isEditing, name, description } = this.state;
-        const canEdit = user._id === project.created_by_id;
+        const canEdit = user._id === project.created_by_id || user.role === 'admin';
 
         if(isLocked){
             return (

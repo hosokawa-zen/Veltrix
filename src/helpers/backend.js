@@ -124,6 +124,27 @@ class BackendAPI {
         });
     };
 
+    changePassword = (_id, oldpass, newpass) => {
+        return new Promise((resolve, reject) => {
+            postCall(`mutation{
+        changePassword(_id:"${_id}", oldpass:"${oldpass}", newpass: "${newpass}"){
+            success
+        }
+    }`,
+                (res) => {
+                    if(res.changePassword){
+                        resolve(res.changePassword);
+                    } else {
+                        reject("change password failed");
+                    }
+                },
+                error => {
+                    reject(this._handleError(error));
+                }
+            );
+        });
+    }
+
   /**
    * forget Password user with given details
    */
