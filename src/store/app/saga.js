@@ -4,6 +4,7 @@ import {APP_INIT} from "./actionTypes";
 // Import Configuration file
 import { initBackendAPI } from "../../helpers/backend";
 import {loginSuccess} from "../auth/login/actions";
+import {initSuccess} from "./actions";
 
 function* appInit() {
     try {
@@ -20,6 +21,7 @@ function* appInit() {
     } catch (error) {
         console.log('err', error);
     }
+    yield put(initSuccess());
 }
 
 export function* watchAppInit() {

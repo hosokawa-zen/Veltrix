@@ -40,6 +40,9 @@ class App extends Component {
 
   render() {
     const Layout = this.getLayout();
+    if(!this.props.app.init){
+      return null;
+    }
 
     return (
       <React.Fragment>
@@ -85,7 +88,8 @@ class App extends Component {
 
 const mapStateToProps = state => {
   return {
-    layout: state.Layout
+    layout: state.Layout,
+    app: state.App,
   };
 };
 

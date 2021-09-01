@@ -1,4 +1,4 @@
-import {APP_INIT} from './actionTypes';
+import {APP_INIT, APP_INIT_SUCCESS} from './actionTypes';
 
 export const init = () => {
     return {
@@ -6,3 +6,11 @@ export const init = () => {
         payload: {}
     }
 }
+
+export const initSuccess = () => {
+    return {
+        type: APP_INIT_SUCCESS,
+        payload: {}
+    }
+}
+

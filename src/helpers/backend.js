@@ -377,7 +377,9 @@ class BackendAPI {
         }`,(res) => {
             if(res.member){
               resolve(res.member);
-            }
+            } else {
+                reject('failed');
+              }
           },
           error => {
             reject(this._handleError(error));

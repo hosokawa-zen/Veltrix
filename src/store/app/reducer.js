@@ -1,6 +1,7 @@
-import {APP_INIT} from './actionTypes';
+import {APP_INIT, APP_INIT_SUCCESS} from './actionTypes';
 
 const initialState = {
+    init: false
 }
 
 const app = (state = initialState, action) => {
@@ -10,6 +11,11 @@ const app = (state = initialState, action) => {
                 ...state
             }
             break;
+        case APP_INIT_SUCCESS:
+            state = {
+                ...state,
+                init: true
+            }
     }
     return state;
 }

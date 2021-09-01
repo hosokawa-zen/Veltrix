@@ -210,7 +210,10 @@ const RootQuery = new GraphQLObjectType({
             async resolve(parent, args){
                 let user = await User.findOne({ name: args.name });
                 if(!user){
-                    return null;
+                    user = await User.findOne({ email: args.name });
+                    if(!user){
+                        return null;
+                    }
                 }
                 let passwordIsValid =  bcrypt.compareSync(args.password, user.password);
 
@@ -634,21 +637,25 @@ const Mutation = new GraphQLObjectType({
                 member_id: { type: GraphQLString },
                 email: { type: GraphQLString },
             },
-            resolve(parent, args){
+            async resolve(parent, args){
                 let member_id = args.member_id;
+                const member = await Member.findById(args.member_id);
+                if(!member){
+                    return { result: "failed"};
+                }
                 let data = {
                     from: Config.mailer_user,
                     to: args.email,
                     subject: "Veltrix Require Password",
-                    text: `Please Create Password in ${Config.server_base_url}/create-password?id=${member_id}`,
-                    html: `<span>Please Create Password in <a href="${Config.server_base_url}/create-password?id=${member_id}">here</a></span>`
+                    text: `Hi ${member.handle}. Your are registered in P2IC. Please create your password to login in ${Config.server_base_url}/create-password?id=${member_id}`,
+                    html: `<div>Hi ${member.handle}.</div><div>Your are registered in P2IC.</div><div>Please create your password to login in <a href="${Config.server_base_url}/create-password?id=${member_id}">here</a></div>`
                 };
 
                 transporter.sendMail(data, function(err, info){
                     if(err){
                         console.log('Send Mail Failed: ', err);
                     } else {
-                        console.log('Sned Mail Success: ', info);
+                        console.log('Send Mail Success: ', info);
                     }
                 });
 

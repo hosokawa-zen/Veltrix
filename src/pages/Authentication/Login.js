@@ -73,12 +73,12 @@ class Login extends Component {
 
                     <form className="mt-4" action="#">
                       <div className="form-group">
-                        <label htmlFor="username">Username</label>
+                        <label htmlFor="username">Email/Name</label>
                         <input
                           type="text"
                           className="form-control"
                           id="username"
-                          placeholder="Enter username"
+                          placeholder="Enter email or name"
                         />
                       </div>
 
