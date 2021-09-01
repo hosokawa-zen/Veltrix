@@ -27,10 +27,10 @@ class ProfileMenu extends Component {
         const { history, logout } = this.props;
         this.setState({openLogoutDlg: false});
         logout(history);
-        //history.push('/login');
     }
 
     render() {
+        const { user } = this.props;
         const { openLogoutDlg } = this.state;
         return (
             <React.Fragment>
@@ -39,10 +39,21 @@ class ProfileMenu extends Component {
                     <i className="mdi mdi-account-circle font-size-36 align-middle mr-1"></i>
                     </DropdownToggle>
                     <DropdownMenu right>
+                        {
+                            user.role === 'admin'?
+                                <>
+                                    <DropdownItem
+                                        tag="a" href="#"
+                                        onClick={(e) => this.props.history.push('/change_sys_password')}
+                                    ><i className="mdi mdi-alert font-size-17 align-middle mr-1"></i>Change System Password</DropdownItem>
+                                    <div className="dropdown-divider"></div>
+                                </>
+                            :null
+                        }
                         <DropdownItem
                             tag="a" href="#"
                             onClick={(e) => this.props.history.push('/change_password')}
-                        ><i className="mdi mdi-account-circle font-size-17 align-middle mr-1"></i>Change Password</DropdownItem>
+                        ><i className="mdi mdi-lock font-size-17 align-middle mr-1"></i>Change Your Password</DropdownItem>
                         <div className="dropdown-divider"></div>
                         <div
                             onClick={(e) => this.setState({openLogoutDlg: true})}
@@ -71,10 +82,14 @@ class ProfileMenu extends Component {
     }
 }
 
+const mapStateToProps = state => ({
+    user: state.Login.user
+})
+
 const mapDispatchToProps = dispatch => ({
     logout: (params) => dispatch(logoutAction(params)),
 });
 
-export default connect(null, mapDispatchToProps)(withRouter(ProfileMenu));
+export default connect(mapStateToProps, mapDispatchToProps)(withRouter(ProfileMenu));
 
 

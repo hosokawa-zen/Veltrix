@@ -8,6 +8,7 @@ const AppRoute = ({
   component: Component,
   layout: Layout,
   isAuthProtected,
+  isAdminProtected,
   user,
   ...rest
 }) => (
@@ -27,6 +28,12 @@ const AppRoute = ({
             to={{ pathname: "/dashboard", state: { from: props.location } }}
           />
         );
+      } else if(isAdminProtected && user.role !== 'admin'){
+          return (
+              <Redirect
+                  to={{ pathname: "/dashboard", state: { from: props.location } }}
+              />
+          );
       }
 
       return (

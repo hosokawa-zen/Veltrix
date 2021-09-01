@@ -29,7 +29,12 @@ import ProjectCollaborators from "../pages/ProjectCollaborators/collaborators";
 import UserCapabilities from "../pages/Admin/user-capabilities";
 
 // Setting
-import ChangePassword from "../pages/Settings/change-password"
+import ChangePassword from "../pages/Settings/change-password";
+import ChangeSysPassword from "../pages/Settings/change-sys-password";
+
+const adminProtectedRoutes = [
+  { path: "/change_sys_password", component: ChangeSysPassword },
+]
 
 const authProtectedRoutes = [
   // Product Control
@@ -68,4 +73,4 @@ const publicRoutes = [
   { path: "/create-password", component: CreatePwd}
 ];
 
-export { authProtectedRoutes, publicRoutes };
+export { authProtectedRoutes, publicRoutes, adminProtectedRoutes };

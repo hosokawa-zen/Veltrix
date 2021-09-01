@@ -5,6 +5,7 @@ const Association = require('./association');
 const ProjectAttribute = require('./projectAttribute');
 const Project = require('./project');
 const Plan = require('./plan');
+const SysInfo = require('./sysInfo');
 
 module.exports = {
     User,
@@ -13,5 +14,6 @@ module.exports = {
     Association,
     ProjectAttribute,
     Project,
-    Plan
+    Plan,
+    SysInfo
 }

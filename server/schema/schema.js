@@ -3,11 +3,12 @@ const jwt = require("jsonwebtoken");
 var bcrypt = require("bcryptjs");
 const nodemailer  = require("nodemailer");
 const Config = require('../config');
-const { User, Team, Member, Association, ProjectAttribute, Project, Plan } = require('../models/index');
+const { User, Team, Member, Association, ProjectAttribute, Project, Plan, SysInfo } = require('../models/index');
 
 const { GraphQLObjectType, GraphQLString,
        GraphQLID, GraphQLNonNull, GraphQLSchema, GraphQLList, GraphQLBoolean } = graphql;
 
+const OriginSysPassword = 'Project21';
 // Setting Mailer
 var transport = {
     host: Config.mailer_host,
@@ -240,6 +241,32 @@ const RootQuery = new GraphQLObjectType({
                 return { success: true };
             }
         },
+        checkSysPass: {
+            type: SuccessType,
+            args: {
+                password: { type: GraphQLString}
+            },
+            async resolve(parent, args){
+                let sysPass = await SysInfo.findOne({ key: 'system_password' });
+                if(!sysPass){
+                    const salt = bcrypt.genSaltSync(10);
+                    sysPass = new SysInfo({
+                        key: 'system_password',
+                        value: bcrypt.hashSync(OriginSysPassword, salt)
+                    });
+                    sysPass.save();
+                    if(args.password !== OriginSysPassword){
+                        return { success: false };
+                    }
+                } else {
+                    let passwordIsValid =  bcrypt.compareSync(args.password, sysPass.value);
+                    if(!passwordIsValid){
+                        return { success: false };
+                    }
+                }
+                return { success: true };
+            }
+        },
         project_attributes: {
             type: new GraphQLList(ProjectAttributeType),
             args:{ attribute_name: { type: GraphQLString}},
@@ -386,6 +413,39 @@ const Mutation = new GraphQLObjectType({
                 const salt = bcrypt.genSaltSync(10);
                 user.password = bcrypt.hashSync(args.newpass, salt);
                 user.save();
+
+                return { success: true };
+            }
+        },
+        changeSysPassword: {
+            type: SuccessType,
+            args: {
+                oldpass: {type: GraphQLString},
+                newpass: {type: GraphQLString}
+            },
+            async resolve(parent, args){
+                let sysPass = await SysInfo.findOne({key: 'system_password'});
+                const salt = bcrypt.genSaltSync(10);
+
+                if(!sysPass){
+                    sysPass = new SysInfo({
+                        key: 'system_password',
+                        value: bcrypt.hashSync(OriginSysPassword, salt)
+                    });
+                    sysPass.save();
+                    if(args.oldpass !== OriginSysPassword){
+                        return { success: false };
+                    }
+                } else {
+                    let passwordIsValid =  bcrypt.compareSync(args.oldpass, sysPass.value);
+
+                    if(!passwordIsValid){
+                        return { success: false };
+                    }
+                }
+
+                sysPass.value = bcrypt.hashSync(args.newpass, salt);
+                sysPass.save();
 
                 return { success: true };
             }

@@ -111,7 +111,7 @@ class MakeReadyPlanPage extends Component {
     const {user} = this.props;
     let password = document.getElementById('password').value;
     try {
-      const res = await getBackendAPI().checkPass({name: user.name, password: password});
+      const res = await getBackendAPI().checkSysPass({password: password});
       this.setState({openPassConfirmDlg: false});
       console.log('success', res);
       if(res.success){
@@ -278,7 +278,7 @@ class MakeReadyPlanPage extends Component {
           >
             <div className="modal-header">
               <h5 className="modal-title mt-0" id="myModalLabel">
-                Confirm Password
+                Confirm System Password
               </h5>
               <button
                   type="button"
@@ -293,12 +293,11 @@ class MakeReadyPlanPage extends Component {
               </button>
             </div>
             <div className="modal-body">
-              <h5>Please check your password!</h5>
               <input
                   type="password"
                   className="form-control"
                   id="password"
-                  placeholder="Enter password"
+                  placeholder="Enter system password"
               />
             </div>
             <div className="modal-footer">

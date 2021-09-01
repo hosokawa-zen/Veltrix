@@ -124,6 +124,25 @@ class BackendAPI {
         });
     };
 
+    /**
+     * Login user with given details
+     */
+    checkSysPass = ({password}) => {
+        return new Promise((resolve, reject) => {
+            getCall(`{
+        checkSysPass(password:"${password}"){
+          success
+         }
+        }`,(res) => {
+                    resolve(res.checkSysPass);
+                },
+                error => {
+                    reject(this._handleError(error));
+                }
+            );
+        });
+    };
+
     changePassword = (_id, oldpass, newpass) => {
         return new Promise((resolve, reject) => {
             postCall(`mutation{
@@ -136,6 +155,27 @@ class BackendAPI {
                         resolve(res.changePassword);
                     } else {
                         reject("change password failed");
+                    }
+                },
+                error => {
+                    reject(this._handleError(error));
+                }
+            );
+        });
+    }
+
+    changeSysPassword = (oldpass, newpass) => {
+        return new Promise((resolve, reject) => {
+            postCall(`mutation{
+        changeSysPassword(oldpass:"${oldpass}", newpass: "${newpass}"){
+            success
+        }
+    }`,
+                (res) => {
+                    if(res.changeSysPassword){
+                        resolve(res.changeSysPassword);
+                    } else {
+                        reject("change system password failed");
                     }
                 },
                 error => {

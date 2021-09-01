@@ -4,7 +4,7 @@ import {connect} from "react-redux";
 import { getBackendAPI } from "../../helpers/backend";
 import {toast} from "react-toastify";
 
-class ChangePassword extends Component {
+class ChangeSysPassword extends Component {
   constructor(props) {
     super(props);
 
@@ -18,20 +18,20 @@ class ChangePassword extends Component {
   onChange = async(e) => {
     const { user } = this.props;
     e.preventDefault();
-    let userpassword = document.getElementById('userpassword').value;
-    let newpassword = document.getElementById('newpassword').value;
-    let confirmpassword = document.getElementById('confirmpassword').value;
-    if(userpassword.length && newpassword.length && newpassword === confirmpassword){
+    let syspassword = document.getElementById('syspassword').value;
+    let newsyspassword = document.getElementById('newsyspassword').value;
+    let confirmsyspassword = document.getElementById('confirmsyspassword').value;
+    if(syspassword.length && newsyspassword.length && newsyspassword === confirmsyspassword){
       try{
-        const res = await getBackendAPI().changePassword( user._id, userpassword, newpassword);
+        const res = await getBackendAPI().changeSysPassword(syspassword, newsyspassword);
         if(res.success){
-          toast.info("Changing your password success", {hideProgressBar: true});
+          toast.info("Changing system password success", {hideProgressBar: true});
         } else {
-          toast.error("Changing your password failed!", {hideProgressBar: true});
+          toast.error("Changing system password failed!", {hideProgressBar: true});
         }
       } catch(e){
         console.log('error', e);
-        toast.error("Changing your password failed!", {hideProgressBar: true});
+        toast.error("Changing system password failed!", {hideProgressBar: true});
       }
     }
   }
@@ -49,31 +49,31 @@ class ChangePassword extends Component {
                   <div className="p-2">
                     <form className="mt-4" action="#">
                       <div className="form-group">
-                        <label htmlFor="userpassword">Old Password</label>
+                        <label htmlFor="syspassword">Old System Password</label>
                         <input
                           type="password"
                           className="form-control"
-                          id="userpassword"
+                          id="syspassword"
                           placeholder="Enter current password"
                         />
                       </div>
 
                       <div className="form-group">
-                        <label htmlFor="newpassword">New Password</label>
+                        <label htmlFor="newsyspassword">New System Password</label>
                         <input
                             type="password"
                             className="form-control"
-                            id="newpassword"
+                            id="newsyspassword"
                             placeholder="Enter new password"
                         />
                       </div>
 
                       <div className="form-group">
-                        <label htmlFor="confirmpassword">Confirm Password</label>
+                        <label htmlFor="confirmsyspassword">Confirm System Password</label>
                         <input
                             type="password"
                             className="form-control"
-                            id="confirmpassword"
+                            id="confirmsyspassword"
                             placeholder="Enter confirm password"
                         />
                       </div>
@@ -109,4 +109,4 @@ const mapStateToProps = state => {
   }
 }
 
-export default connect(mapStateToProps, null)(ChangePassword);
+export default connect(mapStateToProps, null)(ChangeSysPassword);

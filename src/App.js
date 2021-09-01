@@ -3,7 +3,7 @@ import { Switch, BrowserRouter as Router } from "react-router-dom";
 import { connect } from "react-redux";
 
 // Import Routes
-import { authProtectedRoutes, publicRoutes } from "./routes/";
+import {adminProtectedRoutes, authProtectedRoutes, publicRoutes} from "./routes/";
 import AppRoute from "./routes/route";
 
 // layouts
@@ -55,6 +55,17 @@ class App extends Component {
               />
             ))}
 
+            {adminProtectedRoutes.map((route, idx) => (
+                <AppRoute
+                    path={route.path}
+                    layout={Layout}
+                    component={route.component}
+                    key={idx}
+                    isAuthProtected={true}
+                    isAdminProtected={true}
+                />
+            ))}
+
             {authProtectedRoutes.map((route, idx) => (
               <AppRoute
                 path={route.path}
@@ -64,6 +75,7 @@ class App extends Component {
                 isAuthProtected={true}
               />
             ))}
+
           </Switch>
         </Router>
       </React.Fragment>
