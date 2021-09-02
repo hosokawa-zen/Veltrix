@@ -384,6 +384,7 @@ const Mutation = new GraphQLObjectType({
                     email: args.email,
                     name: args.name,
                     password: bcrypt.hashSync(args.password, salt),
+                    role: 'user',
                     token: token,
                     createdAt: now,
                     updatedAt: now
@@ -647,8 +648,8 @@ const Mutation = new GraphQLObjectType({
                     from: Config.mailer_user,
                     to: args.email,
                     subject: "Veltrix Require Password",
-                    text: `Hi ${member.handle}. Your are registered in P2IC. Please create your password to login in ${Config.server_base_url}/create-password?id=${member_id}`,
-                    html: `<div>Hi ${member.handle}.</div><div>Your are registered in P2IC.</div><div>Please create your password to login in <a href="${Config.server_base_url}/create-password?id=${member_id}">here</a></div>`
+                    text: `Hi ${member.handle}. Your are registered in P2IC. Please create your password to login in ${Config.server_base_url}/register?id=${member_id}`,
+                    html: `<div>Hi ${member.handle}.</div><div>Your are registered in P2IC.</div><div>Please create your password to login in <a href="${Config.server_base_url}/register?id=${member_id}">here</a></div>`
                 };
 
                 transporter.sendMail(data, function(err, info){

@@ -33,7 +33,7 @@ import ChangePassword from "../pages/Settings/change-password";
 import ChangeSysPassword from "../pages/Settings/change-sys-password";
 
 const adminProtectedRoutes = [
-  { path: "/change_sys_password", component: ChangeSysPassword },
+  { path: "/register", component: ChangeSysPassword },
 ]
 
 const authProtectedRoutes = [

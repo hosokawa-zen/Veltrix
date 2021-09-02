@@ -6,27 +6,81 @@ import { getBackendAPI } from "../../helpers/backend";
 // import images
 import bg from "../../assets/images/bg.jpg";
 import logoDark from "../../assets/images/logo-dark.png";
+import {toast} from "react-toastify";
 
 class Register extends Component {
   constructor(props) {
     super(props);
-    this.state = {};
+    const { location } = props;
+
+    let id = location.search.replace("?id=", "");
+    this.state = {
+      member_id: (!id || !id.length)?null:id,
+      member: null
+    };
+    this.mounted = false;
+
+    this.init(this.state.member_id);
+  }
+
+  componentDidMount() {
+    this.mounted = true;
+  }
+
+  init = async(id) => {
+    if(!id){
+      return;
+    }
+    const { history } = this.props;
+    let member = await getBackendAPI().getMember(id);
+    if(member && member.is_registered){
+      history.push('/login');
+      toast.info("This user is already registered. Please login", {hideProgressBar: true});
+      return;
+    }
+    if(this.mounted){
+      this.setState({member: member});
+    } else {
+      this.state.member = member;
+    }
   }
 
   onRegister = async(e) => {
     const { history } = this.props;
+    const { member, member_id } = this.state;
     e.preventDefault();
     let useremail = document.getElementById('useremail').value.trim();
     let username = document.getElementById('username').value.trim();
     let userpassword = document.getElementById('userpassword').value;
+    let confirmpassword = document.getElementById('confirmpassword').value;
+    console.log('user', useremail, username, userpassword, confirmpassword);
     let role = 'user';
-    if(useremail.length && this.validateEmail(useremail) && username.length && userpassword.length){
-      try{
-        await getBackendAPI().registerUser(useremail, username, userpassword, role);
-        history.push('/login');
-      } catch(e){
-        console.log('error', e);
+    if(useremail.length && this.validateEmail(useremail) && username.length && userpassword.length && userpassword === confirmpassword){
+      if(member){
+        if(member.email !== useremail || member.handle !== ('@' + username)){
+          toast.error("This email and name is not registered", {hideProgressBar: true});
+          return;
+        }
+        try{
+          await getBackendAPI().registerUserByMail(member.email, username, userpassword, member_id);
+          toast.info("You set your password successfully", {hideProgressBar: true});
+          history.push('/login');
+        } catch(e){
+          toast.error("Setting your password was failed", {hideProgressBar: true});
+          console.log('error', e);
+        }
+      } else {
+        try{
+          await getBackendAPI().registerUser(useremail, username, userpassword, role);
+          toast.info("You were registered successfully", {hideProgressBar: true});
+          history.push('/login');
+        } catch(e){
+          toast.error("Registering was failed", {hideProgressBar: true});
+          console.log('error', e);
+        }
       }
+    } else {
+      toast.error("Invalid Input.", {hideProgressBar: true});
     }
   }
 
@@ -94,6 +148,16 @@ class Register extends Component {
                           className="form-control"
                           id="userpassword"
                           placeholder="Enter password"
+                        />
+                      </div>
+
+                      <div className="form-group">
+                        <label htmlFor="confirmpassword">Confirm Password</label>
+                        <input
+                            type="password"
+                            className="form-control"
+                            id="confirmpassword"
+                            placeholder="Enter confirm password"
                         />
                       </div>
 
