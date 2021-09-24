@@ -5,6 +5,7 @@ const Association = require('./association');
 const ProjectAttribute = require('./projectAttribute');
 const ReasonCodesAttribute = require('./reasonCodes');
 const ConstraintsAttribute = require('./constraints');
+const ConstraintsHistoryAttribute = require('./constraintsLogs');
 const Project = require('./project');
 const Plan = require('./plan');
 const SysInfo = require('./sysInfo');
@@ -19,5 +20,6 @@ module.exports = {
     Project,
     Plan,
     SysInfo,
-    ConstraintsAttribute
+    ConstraintsAttribute,
+    ConstraintsHistoryAttribute
 }

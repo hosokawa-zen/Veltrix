@@ -4,7 +4,7 @@ var bcrypt = require("bcryptjs");
 const nodemailer = require("nodemailer");
 const Config = require('../config');
 
-const {User, Team, Member, Association, ProjectAttribute, Project, Plan, SysInfo, ReasonCodesAttribute, ConstraintsAttribute} = require('../models/index');
+const {User, Team, Member, Association, ProjectAttribute, Project, Plan, SysInfo, ReasonCodesAttribute, ConstraintsAttribute, ConstraintsHistoryAttribute} = require('../models/index');
 
 const {
     GraphQLObjectType, GraphQLString, GraphQLInt,
@@ -90,14 +90,26 @@ const ConstraintsAttributeType = new GraphQLObjectType({
                 return User.findById(parent.initiated_by);
             }
         },
-        work_package_info : {
+        work_package_info: {
             type: ProjectAttributeType,
-            resolve(parent){
+            resolve(parent) {
                 return ProjectAttribute.findById(parent.work_packages);
             }
         }
     })
 });
+
+const ConstraintsHistoryAttributeType = new GraphQLObjectType({
+    name: "ConstraintsHistoryAttribute",
+    fields: () => ({
+        _id: {type: GraphQLString},
+        from: {type: GraphQLInt},
+        to: {type: GraphQLInt},
+        user_id: {type: GraphQLString},
+    })
+});
+
+
 //-------------2021-09-23 Alex-----------------
 
 const TeamType = new GraphQLObjectType({
@@ -745,7 +757,6 @@ const Mutation = new GraphQLObjectType({
                 return reason.save();
             }
         },
-
         add_constraints: {
             type: ConstraintsAttributeType,
             args: {
@@ -771,6 +782,40 @@ const Mutation = new GraphQLObjectType({
                     updatedAt: now
                 })
                 return reason.save();
+            }
+        },
+
+        update_constraints_position: {
+            type: ConstraintsAttributeType,
+            args: {
+                _id: {type: GraphQLString},
+                status: {type: GraphQLInt}
+            },
+            async resolve(parent, args) {
+                let constraint = await ConstraintsAttribute.findById(args._id);
+                constraint.status = args.status;
+                return constraint.save();
+            }
+        },
+        add_constraints_history: {
+            type: ConstraintsHistoryAttributeType,
+            args: {
+                constraint_id: {type: GraphQLString},
+                from: {type: GraphQLInt},
+                to: {type: GraphQLInt},
+                user_id: {type: GraphQLString}
+            },
+            async resolve(parent, args) {
+                const now = Date.now();
+                let history = new ConstraintsHistoryAttribute({
+                    constraint_id: args.constraint_id,
+                    from: args.from,
+                    to: args.to,
+                    user_id: args.user_id,
+                    createdAt: now,
+                    updatedAt: now
+                });
+                return history.save();
             }
         }
         //-------------2021-09-23 Alex-----------------
