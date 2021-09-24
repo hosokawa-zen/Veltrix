@@ -845,7 +845,16 @@ class BackendAPI {
             work_packages,
             check_list,
             comments,
-            status        
+            status,
+            team_info{
+                name
+            },
+            user{
+                email
+            },
+            work_package_info{
+                tag_name
+            }
         }
       }`, (res) => {
                 if (res.add_constraints._id) {

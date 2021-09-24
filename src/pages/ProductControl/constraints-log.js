@@ -149,6 +149,15 @@ class ConstraintsLogPage extends Component {
         });
     }
 
+    addConstraintToTrello(item){
+        const {data} = this.state;
+        data.lanes[item.status - 1].cards.push(item);
+        console.log('add', item, data);
+        this.setState({
+            data: data
+        });
+    }
+
     removeBodyCss() {
         document.body.classList.add("no_padding");
     }
@@ -160,7 +169,7 @@ class ConstraintsLogPage extends Component {
         this.removeBodyCss();
     }
 
-    addConstraint = async () => {
+    addConstraint = () => {
         let constraint = document.getElementById('constraint').value.trim();
         let team = document.getElementById("team").value.trim();
         let workPackage = document.getElementById("work_package").value.trim();
@@ -169,11 +178,25 @@ class ConstraintsLogPage extends Component {
 
         if (constraint.length && team.length && workPackage.length && checklist.length && comments.length) {
             try {
-                let new_constraint = await getBackendAPI().addConstraint(constraint, this.props.user._id, team, workPackage, checklist, comments, 1);
+                getBackendAPI().addConstraint(constraint, this.props.user._id, team, workPackage, checklist, comments, 1).then((new_constraint) => {
+                    console.log('constrant', new_constraint);
+                    let item = {
+                        id: new_constraint._id,
+                        constraint: new_constraint.constraint,
+                        email: new_constraint.user.email,
+                        team: new_constraint.team_info.name,
+                        work_package: new_constraint.work_package_info.tag_name,
+                        check_list: new_constraint.check_list,
+                        comments: new_constraint.comments,
+                        status: new_constraint.status,
+                    };
 
-                this.setState({
-                    addConstraintModal: false,
-                });
+                    this.addConstraintToTrello(item);
+                    this.setState({
+                        addConstraintModal: false,
+                    });
+                })
+
             } catch (e) {
 
             }

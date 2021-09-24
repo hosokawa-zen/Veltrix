@@ -16,7 +16,9 @@ class Register extends Component {
     let id = location.search.replace("?id=", "");
     this.state = {
       member_id: (!id || !id.length)?null:id,
-      member: null
+      member: null,
+      email: '',
+      username: '',
     };
     this.mounted = false;
 
@@ -39,7 +41,7 @@ class Register extends Component {
       return;
     }
     if(this.mounted){
-      this.setState({member: member});
+      this.setState({member: member, email: member?member.email:'', username:member?member.handle.slice(1):''});
     } else {
       this.state.member = member;
     }
@@ -91,6 +93,7 @@ class Register extends Component {
   }
 
   render() {
+    const {member, email, username} = this.state;
     return (
       <React.Fragment>
         <div
@@ -127,6 +130,8 @@ class Register extends Component {
                           type="email"
                           className="form-control"
                           id="useremail"
+                          value={email}
+                          onChange={event => this.setState({email: event.target.value})}
                           placeholder="Enter email"
                         />
                       </div>
@@ -137,6 +142,8 @@ class Register extends Component {
                           type="text"
                           className="form-control"
                           id="username"
+                          value={username}
+                          onChange={event => this.setState({username: event.target.value})}
                           placeholder="Enter username"
                         />
                       </div>
