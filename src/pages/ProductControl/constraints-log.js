@@ -60,12 +60,19 @@ class ConstraintsLogPage extends Component {
             teams: [],
             workPackages: [],
             addConstraintModal: false,
+            eventBus: undefined,
         };
         this.addConstraintModalHandler = this.addConstraintModalHandler.bind(this);
         this.init();
     }
 
     componentDidMount() {
+    }
+
+    setEventBus = handle => {
+        this.setState({
+            eventBus: handle
+        })
     }
 
     init = async () => {
@@ -149,7 +156,7 @@ class ConstraintsLogPage extends Component {
         });
     }
 
-    addConstraintToTrello(item){
+    addConstraintToTrello(item) {
         const {data} = this.state;
         data.lanes[item.status - 1].cards.push(item);
         console.log('add', item, data);
@@ -190,8 +197,8 @@ class ConstraintsLogPage extends Component {
                         comments: new_constraint.comments,
                         status: new_constraint.status,
                     };
-
-                    this.addConstraintToTrello(item);
+                    //this.addConstraintToTrello(item);
+                    this.state.eventBus.publish({type: 'ADD_CARD', laneId: 'constraint', card: item});
                     this.setState({
                         addConstraintModal: false,
                     });
@@ -208,14 +215,14 @@ class ConstraintsLogPage extends Component {
         console.log(toLaneId);
         let sourceID = this.getStatusValue(fromLaneId);
         let targetID = this.getStatusValue(toLaneId);
-        try{
-            await getBackendAPI().updateConstraintsPosition({_id: cardId, target : targetID, source: sourceID, user_id: this.props.user._id});
-        }catch (e){
+        try {
+            await getBackendAPI().updateConstraintsPosition({_id: cardId, target: targetID, source: sourceID, user_id: this.props.user._id});
+        } catch (e) {
         }
     }
 
     getStatusValue = value => {
-        switch (value){
+        switch (value) {
             case "constraint":
                 return 1;
             case "work_in_progress":
@@ -361,6 +368,7 @@ class ConstraintsLogPage extends Component {
                         components={{Card: ConstraintCard}}
                         onCardClick={(cardId) => alert("Test")}
                         onCardMoveAcrossLanes={this.onCardMoveAcrossLanes}
+                        eventBusHandle={this.setEventBus}
                     />
                 </div>
             </React.Fragment>
