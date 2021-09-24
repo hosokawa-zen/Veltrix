@@ -1,9 +1,9 @@
-import { getCall, postCall } from "../apiCall";
+import {getCall, postCall} from "../apiCall";
 
 class BackendAPI {
-  fetchUser = (token) => {
-      return new Promise((resolve, reject) => {
-          getCall(`{
+    fetchUser = (token) => {
+        return new Promise((resolve, reject) => {
+            getCall(`{
                   me(token: "${token}"){
                     _id,
                     email,
@@ -12,27 +12,27 @@ class BackendAPI {
                     token
                   }
                 }`,
-              (res) => {
-                  if (res.me) {
-                      localStorage.setItem("token", res.me.token);
-                      localStorage.setItem("authUser", JSON.stringify(res.me));
-                      resolve(res.me);
-                  } else {
-                      localStorage.removeItem("authUser");
-                      reject("Fetch Failed");
-                  }
-              },
-              error => {
-                  reject(this._handleError(error));
-              });
-      });
-  }
-  /**
-   * Registers the user with given details
-   */
-  registerUser = (email, name, password, role) => {
-    return new Promise((resolve, reject) => {
-      postCall(`mutation{
+                (res) => {
+                    if (res.me) {
+                        localStorage.setItem("token", res.me.token);
+                        localStorage.setItem("authUser", JSON.stringify(res.me));
+                        resolve(res.me);
+                    } else {
+                        localStorage.removeItem("authUser");
+                        reject("Fetch Failed");
+                    }
+                },
+                error => {
+                    reject(this._handleError(error));
+                });
+        });
+    }
+    /**
+     * Registers the user with given details
+     */
+    registerUser = (email, name, password, role) => {
+        return new Promise((resolve, reject) => {
+            postCall(`mutation{
         register(email:"${email}", name:"${name}", password: "${password}", role: "${role}"){
             _id,
             email,
@@ -41,26 +41,26 @@ class BackendAPI {
             token
         }
     }`,
-      (res) => {
-            if(res.register._id){
-              resolve(res.register);
-            } else {
-              reject("Register Failed");
-            }
-          },
-          error => {
-            reject(this._handleError(error));
-          }
-      );
-    });
-  };
+                (res) => {
+                    if (res.register._id) {
+                        resolve(res.register);
+                    } else {
+                        reject("Register Failed");
+                    }
+                },
+                error => {
+                    reject(this._handleError(error));
+                }
+            );
+        });
+    };
 
-  /**
-   * Registers the user with Mail
-   */
-  registerUserByMail = (email, name, password, member_id) => {
-    return new Promise((resolve, reject) => {
-      postCall(`mutation{
+    /**
+     * Registers the user with Mail
+     */
+    registerUserByMail = (email, name, password, member_id) => {
+        return new Promise((resolve, reject) => {
+            postCall(`mutation{
         registerFromMember(email:"${email}", name:"${name}", password: "${password}", member_id: "${member_id}"){
             _id,
             email,
@@ -68,26 +68,26 @@ class BackendAPI {
             token
         }
     }`,
-      (res) => {
-            if(res.registerFromMember._id){
-              resolve(res.registerFromMember);
-            } else {
-              reject("Resiger Failed");
-            }
-          },
-          error => {
-            reject(this._handleError(error));
-          }
-      );
-    });
-  };
+                (res) => {
+                    if (res.registerFromMember._id) {
+                        resolve(res.registerFromMember);
+                    } else {
+                        reject("Resiger Failed");
+                    }
+                },
+                error => {
+                    reject(this._handleError(error));
+                }
+            );
+        });
+    };
 
-  /**
-   * Login user with given details
-   */
-  loginUser = (name, password) => {
-    return new Promise((resolve, reject) => {
-      getCall(`{
+    /**
+     * Login user with given details
+     */
+    loginUser = (name, password) => {
+        return new Promise((resolve, reject) => {
+            getCall(`{
         login(name:"${name}", password:"${password}"){
           _id,
           email,
@@ -95,15 +95,15 @@ class BackendAPI {
           role,
           token
          }
-        }`,(user) => {
-            resolve(user);
-          },
-          error => {
-            reject(this._handleError(error));
-          }
-        );
-    });
-  };
+        }`, (user) => {
+                    resolve(user);
+                },
+                error => {
+                    reject(this._handleError(error));
+                }
+            );
+        });
+    };
 
     /**
      * Login user with given details
@@ -114,7 +114,7 @@ class BackendAPI {
         check(name:"${name}", password:"${password}"){
           success
          }
-        }`,(res) => {
+        }`, (res) => {
                     resolve(res.check);
                 },
                 error => {
@@ -133,7 +133,7 @@ class BackendAPI {
         checkSysPass(password:"${password}"){
           success
          }
-        }`,(res) => {
+        }`, (res) => {
                     resolve(res.checkSysPass);
                 },
                 error => {
@@ -151,7 +151,7 @@ class BackendAPI {
         }
     }`,
                 (res) => {
-                    if(res.changePassword){
+                    if (res.changePassword) {
                         resolve(res.changePassword);
                     } else {
                         reject("change password failed");
@@ -172,7 +172,7 @@ class BackendAPI {
         }
     }`,
                 (res) => {
-                    if(res.changeSysPassword){
+                    if (res.changeSysPassword) {
                         resolve(res.changeSysPassword);
                     } else {
                         reject("change system password failed");
@@ -185,105 +185,107 @@ class BackendAPI {
         });
     }
 
-  /**
-   * forget Password user with given details
-   */
-  forgetPassword = email => {
-    return new Promise((resolve, reject) => {
-      postCall('',() => {
-          console.log("yes authutils");
-          resolve(true);
-        })
-        .catch(error => {
-          reject(this._handleError(error));
+    /**
+     * forget Password user with given details
+     */
+    forgetPassword = email => {
+        return new Promise((resolve, reject) => {
+            postCall('', () => {
+                console.log("yes authutils");
+                resolve(true);
+            })
+                .catch(error => {
+                    reject(this._handleError(error));
+                });
         });
-    });
-  };
+    };
 
-  /**
-   * Logout the user
-   */
-  logout = () => {
-    return new Promise((resolve, reject) => {
-      postCall('',() => {
-          resolve(true);
-        })
-        .catch(error => {
-          reject(this._handleError(error));
+    /**
+     * Logout the user
+     */
+    logout = () => {
+        return new Promise((resolve, reject) => {
+            postCall('', () => {
+                resolve(true);
+            })
+                .catch(error => {
+                    reject(this._handleError(error));
+                });
         });
-    });
-  };
+    };
 
-  setLoggeedInUser = user => {
-    localStorage.setItem("authUser", JSON.stringify(user));
-  };
+    setLoggeedInUser = user => {
+        localStorage.setItem("authUser", JSON.stringify(user));
+    };
 
-  /**
-   * Returns the authenticated user
-   */
-  getAuthenticatedUser = () => {
-    if (!localStorage.getItem("authUser")) return null;
-    return JSON.parse(localStorage.getItem("authUser"));
-  };
+    /**
+     * Returns the authenticated user
+     */
+    getAuthenticatedUser = () => {
+        if (!localStorage.getItem("authUser")) return null;
+        return JSON.parse(localStorage.getItem("authUser"));
+    };
 
-  /**
-   * Return All Project Attributes
-   */
-  allProjectAttributes = () => {
-    return new Promise((resolve, reject) => {
-      getCall(`{
+    /**
+     * Return All Project Attributes
+     */
+    allProjectAttributes = () => {
+        return new Promise((resolve, reject) => {
+            getCall(`{
         all_project_attributes{
           _id,
           attribute_name,
           tag_name,
-          handle
+          handle,
+          color
          }
-        }`,(res) => {
-            if(res.all_project_attributes){
-              resolve(res.all_project_attributes);
-            }
-          },
-          error => {
-            reject(this._handleError(error));
-          }
-        );
-    });
-  }
+        }`, (res) => {
+                    if (res.all_project_attributes) {
+                        resolve(res.all_project_attributes);
+                    }
+                },
+                error => {
+                    reject(this._handleError(error));
+                }
+            );
+        });
+    }
 
-  /**
-   * Add Project Attribute
-   */
+    /**
+     * Add Project Attribute
+     */
 
-   addProjectAttribute = (attribute_name, tag_name, handle) => {
-     return new Promise((resolve, reject) => {
-      postCall(`mutation{
-        add_project_attribute(attribute_name:"${attribute_name}", tag_name:"${tag_name}", handle: "${handle}"){
+    addProjectAttribute = (attribute_name, tag_name, handle, color) => {
+        return new Promise((resolve, reject) => {
+            postCall(`mutation{
+        add_project_attribute(attribute_name:"${attribute_name}", tag_name:"${tag_name}", handle: "${handle}", color: "${color}"){
             _id,
             attribute_name,
             tag_name,
-            handle
+            handle,
+            color
         }
       }`,
-      (res) => {
-            if(res.add_project_attribute._id){
-              resolve(res.add_project_attribute);
-            } else {
-              reject("Resiger Failed");
-            }
-          },
-          error => {
-            reject(this._handleError(error));
-          }
-      );
-     });
-   }
+                (res) => {
+                    if (res.add_project_attribute._id) {
+                        resolve(res.add_project_attribute);
+                    } else {
+                        reject("Register Failed");
+                    }
+                },
+                error => {
+                    reject(this._handleError(error));
+                }
+            );
+        });
+    }
 
     /**
-   * Return All Teams
-   */
-  getTeams = () => {
-    return new Promise((resolve, reject) => {
-      getCall(`{
+     * Return All Teams
+     */
+    getTeams = () => {
+        return new Promise((resolve, reject) => {
+            getCall(`{
         teams{
           _id,
           name,
@@ -291,25 +293,25 @@ class BackendAPI {
           handle,
           planning
          }
-        }`,(res) => {
-            if(res.teams){
-              resolve(res.teams);
-            }
-          },
-          error => {
-            reject(this._handleError(error));
-          }
-        );
-    });
-  }
+        }`, (res) => {
+                    if (res.teams) {
+                        resolve(res.teams);
+                    }
+                },
+                error => {
+                    reject(this._handleError(error));
+                }
+            );
+        });
+    }
 
-  /**
-   * Add Team
-   */
+    /**
+     * Add Team
+     */
 
-   addTeam = (name, abrv, handle, planning) => {
-     return new Promise((resolve, reject) => {
-      postCall(`mutation{
+    addTeam = (name, abrv, handle, planning) => {
+        return new Promise((resolve, reject) => {
+            postCall(`mutation{
         add_team(name:"${name}", abrv:"${abrv}", handle: "${handle}", planning: "${planning}"){
             _id,
             name,
@@ -318,26 +320,26 @@ class BackendAPI {
             planning
         }
       }`,
-      (res) => {
-            if(res.add_team._id){
-              resolve(res.add_team);
-            } else {
-              reject("Resiger Failed");
-            }
-          },
-          error => {
-            reject(this._handleError(error));
-          }
-      );
-     });
-   }
+                (res) => {
+                    if (res.add_team._id) {
+                        resolve(res.add_team);
+                    } else {
+                        reject("Resiger Failed");
+                    }
+                },
+                error => {
+                    reject(this._handleError(error));
+                }
+            );
+        });
+    }
 
     /**
-   * Return All Members
-   */
-  getMembers = () => {
-    return new Promise((resolve, reject) => {
-      getCall(`{
+     * Return All Members
+     */
+    getMembers = () => {
+        return new Promise((resolve, reject) => {
+            getCall(`{
         members{
           _id,
           first_name,
@@ -346,25 +348,25 @@ class BackendAPI {
           handle,
           email
          }
-        }`,(res) => {
-            if(res.members){
-              resolve(res.members);
-            }
-          },
-          error => {
-            reject(this._handleError(error));
-          }
-        );
-    });
-  }
+        }`, (res) => {
+                    if (res.members) {
+                        resolve(res.members);
+                    }
+                },
+                error => {
+                    reject(this._handleError(error));
+                }
+            );
+        });
+    }
 
 
     /**
-   * Return Member
-   */
-  getMember = (id) => {
-    return new Promise((resolve, reject) => {
-      getCall(`{
+     * Return Member
+     */
+    getMember = (id) => {
+        return new Promise((resolve, reject) => {
+            getCall(`{
         member(id:"${id}"){
           _id,
           first_name,
@@ -374,27 +376,27 @@ class BackendAPI {
           email,
           is_registered
          }
-        }`,(res) => {
-            if(res.member){
-              resolve(res.member);
-            } else {
-                reject('failed');
-              }
-          },
-          error => {
-            reject(this._handleError(error));
-          }
-        );
-    });
-  }
+        }`, (res) => {
+                    if (res.member) {
+                        resolve(res.member);
+                    } else {
+                        reject('failed');
+                    }
+                },
+                error => {
+                    reject(this._handleError(error));
+                }
+            );
+        });
+    }
 
-  /**
-   * Add Member
-   */
+    /**
+     * Add Member
+     */
 
-   addMember = (first_name, last_name, abrv, handle, email) => {
-     return new Promise((resolve, reject) => {
-      postCall(`mutation{
+    addMember = (first_name, last_name, abrv, handle, email) => {
+        return new Promise((resolve, reject) => {
+            postCall(`mutation{
         add_member(first_name:"${first_name}", last_name:"${last_name}", abrv:"${abrv}", handle: "${handle}", email: "${email}"){
             _id,
             first_name,
@@ -404,33 +406,37 @@ class BackendAPI {
             email
         }
       }`,
-      (res) => {
-            if(res.add_member._id){
-              let newMember = res.add_member;
-              postCall(`mutation{
+                (res) => {
+                    if (res.add_member._id) {
+                        let newMember = res.add_member;
+                        postCall(`mutation{
                   send_mail(member_id:"${newMember._id}", email:"${newMember.email}"){
                      result
                   }
                 }`,
-                (res) => { resolve(newMember); },
-                (err) => { reject("Resiger Failed"); });
-            } else {
-              reject("Resiger Failed");
-            }
-          },
-          error => {
-            reject(this._handleError(error));
-          }
-      );
-     });
-   }
+                            (res) => {
+                                resolve(newMember);
+                            },
+                            (err) => {
+                                reject("Resiger Failed");
+                            });
+                    } else {
+                        reject("Resiger Failed");
+                    }
+                },
+                error => {
+                    reject(this._handleError(error));
+                }
+            );
+        });
+    }
 
-      /**
-   * Return All Associations
-   */
-  getAssociations = () => {
-    return new Promise((resolve, reject) => {
-      getCall(`{
+    /**
+     * Return All Associations
+     */
+    getAssociations = () => {
+        return new Promise((resolve, reject) => {
+            getCall(`{
         associations{
           _id,
           team_id,
@@ -444,25 +450,25 @@ class BackendAPI {
             last_name
           }
          }
-        }`,(res) => {
-            if(res.associations){
-              resolve(res.associations);
-            }
-          },
-          error => {
-            reject(this._handleError(error));
-          }
-        );
-    });
-  }
+        }`, (res) => {
+                    if (res.associations) {
+                        resolve(res.associations);
+                    }
+                },
+                error => {
+                    reject(this._handleError(error));
+                }
+            );
+        });
+    }
 
-  /**
-   * Add Association
-   */
+    /**
+     * Add Association
+     */
 
-   addAssociation = (team_id, member_id, role) => {
-     return new Promise((resolve, reject) => {
-      postCall(`mutation{
+    addAssociation = (team_id, member_id, role) => {
+        return new Promise((resolve, reject) => {
+            postCall(`mutation{
         add_association(team_id:"${team_id}", member_id:"${member_id}", role: "${role}"){
             _id,
             team_id,
@@ -477,19 +483,19 @@ class BackendAPI {
             }
         }
       }`,
-      (res) => {
-            if(res.add_association._id){
-              resolve(res.add_association);
-            } else {
-              reject("Resiger Failed");
-            }
-          },
-          error => {
-            reject(this._handleError(error));
-          }
-      );
-     });
-   }
+                (res) => {
+                    if (res.add_association._id) {
+                        resolve(res.add_association);
+                    } else {
+                        reject("Resiger Failed");
+                    }
+                },
+                error => {
+                    reject(this._handleError(error));
+                }
+            );
+        });
+    }
 
     /**
      * Return All Projects
@@ -520,8 +526,8 @@ class BackendAPI {
             is_locked
           }
          }
-        }`,(res) => {
-                    if(res.projects){
+        }`, (res) => {
+                    if (res.projects) {
                         resolve(res.projects);
                     }
                 },
@@ -564,7 +570,7 @@ class BackendAPI {
         }
       }`,
                 (res) => {
-                    if(res.add_project._id){
+                    if (res.add_project._id) {
                         resolve(res.add_project);
                     } else {
                         reject("Add Project Failed");
@@ -609,7 +615,7 @@ class BackendAPI {
             }
           }`,
                 (res) => {
-                    if(res.update_project._id){
+                    if (res.update_project._id) {
                         resolve(res.update_project);
                     } else {
                         reject("Update Project Failed");
@@ -634,7 +640,7 @@ class BackendAPI {
         }
       }`,
                 (res) => {
-                    if(res.delete_project.success){
+                    if (res.delete_project.success) {
                         resolve(true);
                     } else {
                         reject("Delete Project Failed");
@@ -668,8 +674,8 @@ class BackendAPI {
           locations,
           is_locked
          }
-        }`,(res) => {
-                    if(res.plans){
+        }`, (res) => {
+                    if (res.plans) {
                         resolve(res.plans);
                     }
                 },
@@ -703,7 +709,7 @@ class BackendAPI {
         }
       }`,
                 (res) => {
-                    if(res.add_plan._id){
+                    if (res.add_plan._id) {
                         resolve(res.add_plan);
                     } else {
                         reject("Add Plan Failed");
@@ -739,7 +745,7 @@ class BackendAPI {
         }
       }`,
                 (res) => {
-                    if(res.update_plan._id){
+                    if (res.update_plan._id) {
                         resolve(res.update_plan);
                     } else {
                         reject("Update Plan Failed");
@@ -764,7 +770,7 @@ class BackendAPI {
         }
       }`,
                 (res) => {
-                    if(res.delete_plan.success){
+                    if (res.delete_plan.success) {
                         resolve(true);
                     } else {
                         reject("Delete Plan Failed");
@@ -776,15 +782,131 @@ class BackendAPI {
             );
         });
     }
+
+    //-------------2021-09-23 Alex-----------------
+
+    addReasonCodes = (ref_id, reason, description) => {
+        return new Promise((resolve, reject) => {
+            postCall(`mutation{
+        add_reason_codes(ref_id:"${ref_id}", reason:"${reason}", description: "${description}"){
+            _id,
+            ref_id,
+            reason,
+            description
+        }
+      }`,
+                (res) => {
+                    if (res.add_reason_codes._id) {
+                        resolve(res.add_reason_codes);
+                    } else {
+                        reject("Register Failed");
+                    }
+                },
+                error => {
+                    reject(this._handleError(error));
+                }
+            );
+        });
+    }
+
     /**
-   * Handle the error
-   * @param {*} error
-   */
-  _handleError(error) {
-    // var errorCode = error.code;
-    var errorMessage = error.message;
-    return errorMessage;
-  }
+     * Get Reason Codes
+     * @returns {Promise<unknown>}
+     */
+    getReasonCodes = () => {
+        return new Promise((resolve, reject) => {
+            getCall(`{
+        reason_codes{
+          _id,
+          ref_id,
+          reason,
+          description
+         }
+        }`, (res) => {
+                    if (res.reason_codes) {
+                        resolve(res.reason_codes);
+                    }
+                },
+                error => {
+                    reject(this._handleError(error));
+                }
+            );
+        });
+    }
+
+    addConstraint = (constraint, initiated_by, team, workPackage, checklist, comments, status) => {
+        return new Promise((resolve, reject) => {
+            postCall(`mutation{
+        add_constraints(constraint:"${constraint}", initiated_by:"${initiated_by}", team: "${team}", work_packages: "${workPackage}", check_list: "${checklist}", comments: "${comments}", status: ${status}){
+            _id,
+            constraint,
+            initiated_by,
+            team,
+            work_packages,
+            check_list,
+            comments,
+            status        
+        }
+      }`, (res) => {
+                if (res.add_constraints._id) {
+                    resolve(res.add_constraints);
+                } else {
+                    reject("Register Failed");
+                }
+            }, error => {
+                reject(this._handleError(error));
+            });
+        });
+    }
+
+    getAllConstraints = () => {
+        return new Promise((resolve, reject) => {
+            getCall(`{
+        constraints{
+          _id,
+          constraint,
+          initiated_by,
+          team,
+          work_packages,
+          check_list,
+          comments,
+          status,
+          team_info{
+            name
+          },
+          user{
+            email
+          },
+          work_package_info{
+            tag_name
+          }
+         }
+        }`, (res) => {
+                if (res.constraints) {
+                    resolve(res.constraints);
+                }
+            }, error => {
+                reject(this._handleError(error));
+            })
+        });
+    }
+
+    updateConstraintsPosition = ({_id, target, source, user_id}) => {
+        return new Promise((resolve, reject) => {
+            postCall()
+        });
+    }
+
+    //-------------2021-09-23 Alex-----------------
+    /**
+     * Handle the error
+     * @param {*} error
+     */
+    _handleError(error) {
+        // var errorCode = error.code;
+        var errorMessage = error.message;
+        return errorMessage;
+    }
 }
 
 let _backendAPI = null;
@@ -794,17 +916,17 @@ let _backendAPI = null;
  * @param {*} config
  */
 const initBackendAPI = () => {
-  if (!_backendAPI) {
-    _backendAPI = new BackendAPI();
-  }
-  return _backendAPI;
+    if (!_backendAPI) {
+        _backendAPI = new BackendAPI();
+    }
+    return _backendAPI;
 };
 
 /**
  * Returns the backend
  */
 const getBackendAPI = () => {
-  return _backendAPI;
+    return _backendAPI;
 };
 
-export { initBackendAPI, getBackendAPI };
+export {initBackendAPI, getBackendAPI};

@@ -1,5 +1,5 @@
 import React from "react";
-import { Redirect } from "react-router-dom";
+import {Redirect} from "react-router-dom";
 
 // Authentication related pages
 import Login from "../pages/Authentication/Login";
@@ -31,46 +31,50 @@ import UserCapabilities from "../pages/Admin/user-capabilities";
 // Setting
 import ChangePassword from "../pages/Settings/change-password";
 import ChangeSysPassword from "../pages/Settings/change-sys-password";
+import ReasonCodes from "../pages/ProjectReasonCodes/reason-codes";
 
 const adminProtectedRoutes = [
-  { path: "/register", component: ChangeSysPassword },
+    {path: "/register", component: ChangeSysPassword},
 ]
 
 const authProtectedRoutes = [
-  // Product Control
-  { path: "/constraints-log", component: ConstraintsLog },
-  { path: "/make-ready-plan", component: MakeReadyPlan },
-  { path: "/commitment-plan", component: CommitmentPlan },
-  { path: "/standard-process-library", component: StandardProcessLibrary },
-  { path: "/analytics", component: Analytics },
+    // Product Control
+    {path: "/constraints-log", component: ConstraintsLog},
+    {path: "/make-ready-plan", component: MakeReadyPlan},
+    {path: "/commitment-plan", component: CommitmentPlan},
+    {path: "/standard-process-library", component: StandardProcessLibrary},
+    {path: "/analytics", component: Analytics},
 
-  // Digital Design
-  { path: "/digital-design-view", component: DigitalDesignView },
+    // Digital Design
+    {path: "/digital-design-view", component: DigitalDesignView},
 
-  // Project Attributes
-  { path: "/project-attributes", component: ProjectAttributes },
+    // Project Attributes
+    {path: "/project-attributes", component: ProjectAttributes},
 
-  // Project Collaborators
-  { path: "/project-collaborators", component: ProjectCollaborators },
+    // Project Collaborators
+    {path: "/project-collaborators", component: ProjectCollaborators},
 
-  // System Admin
-  { path: "/user-capabilities", component: UserCapabilities },
+    // Reason Codes
+    {path: "/reason-codes", component: ReasonCodes},
 
-  // Dashboard
-  { path: "/dashboard", component: Dashboard },
+    // System Admin
+    {path: "/user-capabilities", component: UserCapabilities},
 
-  // Setting
-  { path: "/change_password", component: ChangePassword },
+    // Dashboard
+    {path: "/dashboard", component: Dashboard},
 
-  { path: "/", exact: true, component: () => <Redirect to="/dashboard" /> },
+    // Setting
+    {path: "/change_password", component: ChangePassword},
+
+    {path: "/", exact: true, component: () => <Redirect to="/dashboard"/>},
 ];
 
 const publicRoutes = [
-  { path: "/logout", component: Logout },
-  { path: "/login", component: Login },
-  { path: "/forget-password", component: ForgetPwd },
-  { path: "/register", component: Register },
-  { path: "/create-password", component: CreatePwd}
+    {path: "/logout", component: Logout},
+    {path: "/login", component: Login},
+    {path: "/forget-password", component: ForgetPwd},
+    {path: "/register", component: Register},
+    {path: "/create-password", component: CreatePwd}
 ];
 
-export { authProtectedRoutes, publicRoutes, adminProtectedRoutes };
+export {authProtectedRoutes, publicRoutes, adminProtectedRoutes};

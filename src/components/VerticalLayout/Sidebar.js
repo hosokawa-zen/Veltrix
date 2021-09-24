@@ -56,7 +56,7 @@ const SidebarContent = props => {
               <Link to="project-collaborators">Collaborators</Link>
             </li>
 			<li>
-              <Link to="project-collaborators">Reason Codes</Link>
+              <Link to="reason-codes">Reason Codes</Link>
             </li>
           </ul>
         </li>

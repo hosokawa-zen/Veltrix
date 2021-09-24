@@ -3,6 +3,8 @@ const Team = require('./team');
 const Member = require('./member');
 const Association = require('./association');
 const ProjectAttribute = require('./projectAttribute');
+const ReasonCodesAttribute = require('./reasonCodes');
+const ConstraintsAttribute = require('./constraints');
 const Project = require('./project');
 const Plan = require('./plan');
 const SysInfo = require('./sysInfo');
@@ -13,7 +15,9 @@ module.exports = {
     Member,
     Association,
     ProjectAttribute,
+    ReasonCodesAttribute,
     Project,
     Plan,
-    SysInfo
+    SysInfo,
+    ConstraintsAttribute
 }
