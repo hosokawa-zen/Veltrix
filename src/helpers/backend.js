@@ -868,6 +868,7 @@ class BackendAPI {
         });
     }
 
+
     getAllConstraints = () => {
         return new Promise((resolve, reject) => {
             getCall(`{
@@ -903,13 +904,14 @@ class BackendAPI {
     updateConstraintsPosition = ({_id, target, source, user_id}) => {
         return new Promise((resolve, reject) => {
             postCall(`mutation{
-        update_constraints_position(_id: "${_id}", status:"${target}"){
-            _id,          
+        update_constraints_position(_id: "${_id}", from: ${source}, to: ${target}, user_id: "${user_id}"){
+            _id
+          }
           }`, (res) => {
                 if (res.update_constraints_position._id) {
-                    
+                    resolve(res.update_constraints_position);
                 } else {
-                    reject("Update Project Failed");
+                    reject("Update Constraint Failed");
                 }
             }, error => {
                 reject(this._handleError(error));

@@ -109,43 +109,43 @@ class ConstraintsLogPage extends Component {
                     lane1.push(data);
                     break;
             }
+        });
 
-            let boardData = {
-                lanes: [
-                    {
-                        id: 'constraint',
-                        title: 'Constraint',
-                        label: lane1.length.toString(),
-                        currentPage: 1,
-                        cards: lane1
-                    },
-                    {
-                        id: 'work_in_progress',
-                        title: 'Work In Progress',
-                        label: lane2.length.toString(),
-                        currentPage: 1,
-                        cards: lane2
-                    },
-                    {
-                        id: 'blocked',
-                        title: 'Blocked',
-                        label: lane3.length.toString(),
-                        currentPage: 1,
-                        cards: lane3
-                    }, {
-                        id: 'completed',
-                        title: 'Completed',
-                        label: lane4.length.toString(),
-                        currentPage: 1,
-                        cards: lane4
-                    }
-                ]
-            }
-            this.setState({
-                teams: teams,
-                workPackages: workPackages,
-                data: boardData
-            });
+        let boardData = {
+            lanes: [
+                {
+                    id: 'constraint',
+                    title: 'Constraint',
+                    label: lane1.length.toString(),
+                    currentPage: 1,
+                    cards: lane1
+                },
+                {
+                    id: 'work_in_progress',
+                    title: 'Work In Progress',
+                    label: lane2.length.toString(),
+                    currentPage: 1,
+                    cards: lane2
+                },
+                {
+                    id: 'blocked',
+                    title: 'Blocked',
+                    label: lane3.length.toString(),
+                    currentPage: 1,
+                    cards: lane3
+                }, {
+                    id: 'completed',
+                    title: 'Completed',
+                    label: lane4.length.toString(),
+                    currentPage: 1,
+                    cards: lane4
+                }
+            ]
+        }
+        this.setState({
+            teams: teams,
+            workPackages: workPackages,
+            data: boardData
         });
     }
 
@@ -203,10 +203,15 @@ class ConstraintsLogPage extends Component {
         }
     }
 
-    onCardMoveAcrossLanes = (fromLaneId, toLaneId, cardId, addedIndex) => {
-        let targetID = this.getStatusValue(fromLaneId);
-        let sourceID = this.getStatusValue(toLaneId);
-
+    onCardMoveAcrossLanes = async (fromLaneId, toLaneId, cardId, addedIndex) => {
+        console.log(fromLaneId);
+        console.log(toLaneId);
+        let sourceID = this.getStatusValue(fromLaneId);
+        let targetID = this.getStatusValue(toLaneId);
+        try{
+            await getBackendAPI().updateConstraintsPosition({_id: cardId, target : targetID, source: sourceID, user_id: this.props.user._id});
+        }catch (e){
+        }
     }
 
     getStatusValue = value => {

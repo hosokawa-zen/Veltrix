@@ -789,11 +789,24 @@ const Mutation = new GraphQLObjectType({
             type: ConstraintsAttributeType,
             args: {
                 _id: {type: GraphQLString},
-                status: {type: GraphQLInt}
+                from: {type: GraphQLInt},
+                to: {type: GraphQLInt},
+                user_id: {type: GraphQLString}
             },
             async resolve(parent, args) {
+                console.log(args);
+                const now = Date.now();
+                /*let history = new ConstraintsHistoryAttribute({
+                    constraint_id: args.constraint_id,
+                    from: args.from,
+                    to: args.to,
+                    user_id: args.user_id,
+                    createdAt: now,
+                    updatedAt: now
+                });
+                history.save();*/
                 let constraint = await ConstraintsAttribute.findById(args._id);
-                constraint.status = args.status;
+                constraint.status = args.to;
                 return constraint.save();
             }
         },
