@@ -834,17 +834,80 @@ class BackendAPI {
         });
     }
 
-    addConstraint = (constraint, initiated_by, team, workPackage, checklist, comments, status) => {
+    addComment = (content, user_id, constraint_id) => {
         return new Promise((resolve, reject) => {
             postCall(`mutation{
-        add_constraints(constraint:"${constraint}", initiated_by:"${initiated_by}", team: "${team}", work_packages: "${workPackage}", check_list: "${checklist}", comments: "${comments}", status: ${status}){
+                add_comment(constraint_id:"${constraint_id}", user_id:"${user_id}", content:"${content}"){
+                    _id,
+                    constraint_id,
+                    user_id,
+                    content,
+                    comment_date,
+                    user{
+                        name
+                    }
+                }
+            }`, (res) => {
+                if (res.add_comment._id) {
+                    resolve(res.add_comment);
+                } else {
+                    reject("Register Failed");
+                }
+            }, error => {
+                reject(this._handleError(error));
+            });
+        });
+    }
+
+    addCheckList = (checklist, constraint_id) => {
+        return new Promise((resolve, reject) => {
+            postCall(`mutation{
+                add_checkList(constraint_id: "${constraint_id}", check_list: "${checklist}"){
+                    _id
+                }
+            }`, (res) => {
+                if (res.add_checkList._id) {
+                    resolve(res.add_checkList);
+                } else {
+                    reject("Register Failed");
+                }
+            }, error => {
+                reject(this._handleError(error));
+            })
+        })
+    }
+
+    updateConstraint = (constraint_id, constraint) => {
+        return new Promise((resolve, reject) => {
+            postCall(`mutation{
+                update_constraint(constraint_id: "${constraint_id}", constraint: "${constraint}"){
+                    _id
+                }
+            }`, (res) => {
+            }, error => {
+                reject(this._handleError(error));
+            });
+        });
+    }
+
+    addConstraint = (constraint, initiated_by, team, workPackage, checklist, status) => {
+        return new Promise((resolve, reject) => {
+            postCall(`mutation{
+        add_constraints(constraint:"${constraint}", initiated_by:"${initiated_by}", team: "${team}", work_packages: "${workPackage}", check_list: "${checklist}", status: ${status}){
             _id,
             constraint,
             initiated_by,
             team,
             work_packages,
             check_list,
-            comments,
+            checked_list,
+            comments{               
+                content,
+                comment_date,
+                user{
+                    name
+                }
+            },
             status,
             team_info{
                 name
@@ -879,7 +942,14 @@ class BackendAPI {
           team,
           work_packages,
           check_list,
-          comments,
+          checked_list,
+          comments{           
+            content,
+            comment_date,
+            user{
+                name
+            }
+          },
           status,
           team_info{
             name

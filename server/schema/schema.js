@@ -4,7 +4,11 @@ var bcrypt = require("bcryptjs");
 const nodemailer = require("nodemailer");
 const Config = require('../config');
 
-const {User, Team, Member, Association, ProjectAttribute, Project, Plan, SysInfo, ReasonCodesAttribute, ConstraintsAttribute, ConstraintsHistoryAttribute} = require('../models/index');
+const {
+    User, Team, Member, Association,
+    ProjectAttribute, Project, Plan, SysInfo, ReasonCodesAttribute,
+    ConstraintsAttribute, ConstraintsHistoryAttribute, CommentsAttribute
+} = require('../models/index');
 
 const {
     GraphQLObjectType, GraphQLString, GraphQLInt,
@@ -76,7 +80,7 @@ const ConstraintsAttributeType = new GraphQLObjectType({
         team: {type: GraphQLString},
         work_packages: {type: GraphQLString},
         check_list: {type: GraphQLString},
-        comments: {type: GraphQLString},
+        checked_list: {type: GraphQLString},
         status: {type: GraphQLInt},
         team_info: {
             type: TeamType,
@@ -94,6 +98,29 @@ const ConstraintsAttributeType = new GraphQLObjectType({
             type: ProjectAttributeType,
             resolve(parent) {
                 return ProjectAttribute.findById(parent.work_packages);
+            }
+        },
+        comments: {
+            type: new GraphQLList(CommentsAttributeType),
+            resolve(parent, args) {
+                return CommentsAttribute.find({constraint_id: parent._id});
+            }
+        }
+    })
+});
+
+const CommentsAttributeType = new GraphQLObjectType({
+    name: "CommentsAttribute",
+    fields: () => ({
+        _id: {type: GraphQLString},
+        user_id: {type: GraphQLString},
+        constraint_id: {type: GraphQLString},
+        content: {type: GraphQLString},
+        comment_date: {type: GraphQLString},
+        user: {
+            type: UserType,
+            resolve(parent) {
+                return User.findById(parent.user_id);
             }
         }
     })
@@ -765,7 +792,6 @@ const Mutation = new GraphQLObjectType({
                 team: {type: GraphQLString},
                 work_packages: {type: GraphQLString},
                 check_list: {type: GraphQLString},
-                comments: {type: GraphQLString},
                 status: {type: GraphQLInt},
             },
             async resolve(parent, args) {
@@ -776,7 +802,7 @@ const Mutation = new GraphQLObjectType({
                     team: args.team,
                     work_packages: args.work_packages,
                     check_list: args.check_list,
-                    comments: args.comments,
+                    checked_list: "",
                     status: args.status,
                     createdAt: now,
                     updatedAt: now
@@ -794,7 +820,6 @@ const Mutation = new GraphQLObjectType({
                 user_id: {type: GraphQLString}
             },
             async resolve(parent, args) {
-                console.log(args);
                 const now = Date.now();
                 /*let history = new ConstraintsHistoryAttribute({
                     constraint_id: args.constraint_id,
@@ -829,6 +854,56 @@ const Mutation = new GraphQLObjectType({
                     updatedAt: now
                 });
                 return history.save();
+            }
+        },
+        add_comment: {
+            type: CommentsAttributeType,
+            args: {
+                constraint_id: {type: GraphQLString},
+                user_id: {type: GraphQLString},
+                content: {type: GraphQLString}
+            },
+            async resolve(parent, args) {
+                const now = Date.now();
+                const date = new Date().toLocaleDateString('en-US');
+                let new_comment = new CommentsAttribute({
+                    constraint_id: args.constraint_id,
+                    user_id: args.user_id,
+                    content: args.content,
+                    comment_date: date,
+                    createdAt: now,
+                    updatedAt: now
+                });
+                return new_comment.save();
+            }
+        },
+        add_checkList: {
+            type: ConstraintsAttributeType,
+            args: {
+                constraint_id: {type: GraphQLString},
+                check_list: {type: GraphQLString},
+            },
+            async resolve(parent, args) {
+                const now = Date.now();
+                let constraint = await ConstraintsAttribute.findById(args.constraint_id);
+                constraint.check_list = args.check_list;
+                constraint.updatedAt = now;
+                return constraint.save();
+            }
+        },
+
+        update_constraint: {
+            type: ConstraintsAttributeType,
+            args: {
+                constraint_id: {type: GraphQLString},
+                constraint: {type: GraphQLString},
+            },
+            async resolve(parent, args) {
+                const now = Date.now();
+                let constraint = await ConstraintsAttribute.findById(args.constraint_id);
+                constraint.constraint = args.constraint;
+                constraint.updatedAt = now;
+                return constraint.save();
             }
         }
         //-------------2021-09-23 Alex-----------------

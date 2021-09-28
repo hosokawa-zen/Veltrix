@@ -490,7 +490,7 @@ class CollaboratorsPage extends Component {
                         <Col sm={6}>
                             <div className="card">
                                 <div className="card-body">
-                                    <h4 className="card-title">Team Memeber Association</h4>
+                                    <h4 className="card-title">Team Member Association</h4>
 
                                     <div className="table-responsive">
                                         <table className="table table-striped mb-0">

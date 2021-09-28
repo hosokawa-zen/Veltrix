@@ -1,0 +1,20 @@
+.boardContainer div {
+    width: 100%;
+}
+
+.boardContainer .smooth-dnd-container.horizontal {
+    display: flex;
+}
+
+.boardContainer .smooth-dnd-container.vertical {
+    width: 100%;
+}
+
+.boardContainer .react-trello-lane {
+    flex-grow: 1;
+}
+
+.boardContainer article {
+    width: 100%;
+    max-width: unset;
+}

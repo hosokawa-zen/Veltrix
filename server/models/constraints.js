@@ -7,7 +7,7 @@ const constraintsSchema = new Schema({
     team: String,
     work_packages: String,
     check_list: String,
-    comments: String,
+    checked_list: String,
     status: Number,
     createdAt: Number,
     updatedAt: Number

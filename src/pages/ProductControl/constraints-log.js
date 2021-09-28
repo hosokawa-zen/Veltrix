@@ -1,5 +1,5 @@
 import React, {Component} from "react";
-import {Row, Col, Button, Label, Input, Modal} from "reactstrap";
+import {Button, Col, Input, Label, Modal, Row} from "reactstrap";
 import {Link} from "react-router-dom";
 import Board from 'react-trello';
 import {MovableCardWrapper} from 'react-trello/dist/styles/Base';
@@ -7,45 +7,73 @@ import {MovableCardWrapper} from 'react-trello/dist/styles/Base';
 import "react-draft-wysiwyg/dist/react-draft-wysiwyg.css";
 import {getBackendAPI} from "../../helpers/backend";
 import {connect} from "react-redux";
+import '../../css/common.css';
 
-const ConstraintCard = ({
-                            onClick,
-                            id,
-                            constraint,
-                            email,
-                            team,
-                            work_package,
-                            check_list,
-                            comments,
-                            status
-                        }) => {
+const ConstraintCard = (
+    {
+        onClick,
+        onChange,
+        id,
+        constraint,
+        email,
+        team,
+        work_package,
+        check_list,
+        checked_list,
+        comments,
+        status
+    }) => {
+    const onUpdateEvent = (id, checked_list) => {
+        onChange({id: id, checked_list: checked_list});
+    }
+
     return (
-        <MovableCardWrapper>
+        <MovableCardWrapper
+        >
             <header
                 style={{
                     borderBottom: '1px solid #eee',
                     paddingBottom: 6,
                     marginBottom: 10,
                     display: 'flex',
+                    color: '#111',
                     flexDirection: 'row',
                     justifyContent: 'space-between',
                 }}>
                 <div style={{fontSize: 14, fontWeight: 'bold'}}>{constraint}</div>
+                <i className={"fas fa-edit"} onClick={onClick}/>
             </header>
-            <div style={{padding: '5px 0px'}}>
+            <div style={{padding: '5px 0px', color: '#111'}}>
                 {email}
             </div>
-            <div style={{padding: '5px 0px'}}>
+            <div style={{padding: '5px 0px', color: '#111'}}>
                 Team: {team}
             </div>
-            <div style={{padding: '5px 0px'}}>
+            <div style={{padding: '5px 0px', color: '#111'}}>
                 Work Package: {work_package}
             </div>
-            <div style={{padding: '5px 0px'}}>
-                {check_list}
+            <div style={{padding: '5px 0px', color: '#111'}}>
+                {check_list.map((item, index) => (
+                        <div className="custom-control custom-checkbox" key={index}>
+                            <input type="checkbox" className="custom-control-input" id={"checkbox" + id + "_" + index} value={item} defaultChecked={checked_list.includes(item)} onClick={e => {
+                                if (checked_list.includes(item)) {
+                                    let idx = checked_list.indexOf(item);
+                                    if (idx > -1) {
+                                        checked_list.splice(idx, 1);
+                                        onUpdateEvent(id, checked_list);
+                                    }
+                                } else {
+                                    checked_list.push(item);
+                                    onUpdateEvent(id, checked_list);
+                                }
+                            }}/>
+                            <label className="custom-control-label" htmlFor={"checkbox" + id + "_" + index}>{item}</label>
+                        </div>
+                    )
+                )}
             </div>
-            <div style={{padding: '5px 0px'}}>
-                {comments}
+            <div style={{padding: '5px 0px', color: '#111'}}>
+                {comments.length}
             </div>
         </MovableCardWrapper>
     )
@@ -60,9 +88,15 @@ class ConstraintsLogPage extends Component {
             teams: [],
             workPackages: [],
             addConstraintModal: false,
+            editConstraintModal: false,
             eventBus: undefined,
+            selected_card: undefined,
+            comment_request: false,
+            checklist_request: false,
+            update_request: false,
         };
         this.addConstraintModalHandler = this.addConstraintModalHandler.bind(this);
+        this.editConstraintModalHandler = this.editConstraintModalHandler.bind(this);
         this.init();
     }
 
@@ -95,9 +129,11 @@ class ConstraintsLogPage extends Component {
                 email: item.user.email,
                 team: item.team_info.name,
                 work_package: item.work_package_info.tag_name,
-                check_list: item.check_list,
+                check_list: item.check_list.split(","),
+                checked_list: item.checked_list.split(","),
                 comments: item.comments,
                 status: item.status,
+                metadata: {id: item._id}
             };
             switch (item.status) {
                 case 1:
@@ -125,27 +161,31 @@ class ConstraintsLogPage extends Component {
                     title: 'Constraint',
                     label: lane1.length.toString(),
                     currentPage: 1,
-                    cards: lane1
+                    cards: lane1,
+                    style: {backgroundColor: "rgba(255, 255, 255, 0.2)", color: "white"},
                 },
                 {
                     id: 'work_in_progress',
                     title: 'Work In Progress',
                     label: lane2.length.toString(),
                     currentPage: 1,
-                    cards: lane2
+                    cards: lane2,
+                    style: {backgroundColor: "rgba(255, 255, 255, 0.2)", color: "white"},
                 },
                 {
                     id: 'blocked',
                     title: 'Blocked',
                     label: lane3.length.toString(),
                     currentPage: 1,
-                    cards: lane3
+                    cards: lane3,
+                    style: {backgroundColor: "rgba(255, 255, 255, 0.2)", color: "white"},
                 }, {
                     id: 'completed',
                     title: 'Completed',
                     label: lane4.length.toString(),
                     currentPage: 1,
-                    cards: lane4
+                    cards: lane4,
+                    style: {backgroundColor: "rgba(255, 255, 255, 0.2)", color: "white"},
                 }
             ]
         }
@@ -176,16 +216,21 @@ class ConstraintsLogPage extends Component {
         this.removeBodyCss();
     }
 
+    editConstraintModalHandler() {
+        this.setState(prevState => ({
+            editConstraintModal: !prevState.editConstraintModal
+        }));
+        this.removeBodyCss();
+    }
+
     addConstraint = () => {
         let constraint = document.getElementById('constraint').value.trim();
         let team = document.getElementById("team").value.trim();
         let workPackage = document.getElementById("work_package").value.trim();
         let checklist = document.getElementById("checklist").value.trim();
-        let comments = document.getElementById("comments").value.trim();
-
-        if (constraint.length && team.length && workPackage.length && checklist.length && comments.length) {
+        if (constraint.length && team.length && workPackage.length && checklist.length) {
             try {
-                getBackendAPI().addConstraint(constraint, this.props.user._id, team, workPackage, checklist, comments, 1).then((new_constraint) => {
+                getBackendAPI().addConstraint(constraint, this.props.user._id, team, workPackage, checklist, 1).then((new_constraint) => {
                     console.log('constrant', new_constraint);
                     let item = {
                         id: new_constraint._id,
@@ -193,7 +238,8 @@ class ConstraintsLogPage extends Component {
                         email: new_constraint.user.email,
                         team: new_constraint.team_info.name,
                         work_package: new_constraint.work_package_info.tag_name,
-                        check_list: new_constraint.check_list,
+                        check_list: new_constraint.check_list.split(","),
+                        checked_list: new_constraint.checked_list.split(","),
                         comments: new_constraint.comments,
                         status: new_constraint.status,
                     };
@@ -213,10 +259,45 @@ class ConstraintsLogPage extends Component {
     onCardMoveAcrossLanes = async (fromLaneId, toLaneId, cardId, addedIndex) => {
         console.log(fromLaneId);
         console.log(toLaneId);
+        console.log(cardId);
+        console.log(addedIndex);
         let sourceID = this.getStatusValue(fromLaneId);
         let targetID = this.getStatusValue(toLaneId);
+        if (sourceID === targetID) return;
         try {
-            await getBackendAPI().updateConstraintsPosition({_id: cardId, target: targetID, source: sourceID, user_id: this.props.user._id});
+            getBackendAPI().updateConstraintsPosition({_id: cardId, target: targetID, source: sourceID, user_id: this.props.user._id}).then((res) => {
+                //this.state.eventBus.publish({type: 'MOVE_CARD', fromLaneId: fromLaneId, toLaneId: toLaneId, cardId: cardId, index: addedIndex,});
+                /*this.state.eventBus.publish({
+                    type: 'UPDATE_LANES',
+                    lanes: this.state.data.lanes.map((lane) => {
+                        return {...lane, label: lane.cards.length.toString()}
+                    })
+                });*/
+                let sourceLane = this.state.data.lanes.find((item) => item.id === fromLaneId);
+                let targetCard = sourceLane.cards.find((card) => card.id === cardId);
+                sourceLane.cards.splice(sourceLane.cards.indexOf((card) => card.id === cardId), 1);
+                targetCard.laneId = toLaneId;
+                let targetLane = this.state.data.lanes.find((item) => item.id === toLaneId);
+                targetLane.cards.splice(addedIndex, 0, targetCard)
+                this.state.data.lanes[this.state.data.lanes.indexOf((item) => item.id === fromLaneId)] = sourceLane;
+                this.state.data.lanes[this.state.data.lanes.indexOf((item) => item.id === toLaneId)] = targetLane;
+                this.setState({});
+                /*this.state.eventBus.publish({
+                    type: 'UPDATE_LANE',
+                    lane: sourceLane,
+                });
+                this.state.eventBus.publish({
+                    type: 'UPDATE_LANE',
+                    lane: targetLane,
+                });*/
+                this.state.eventBus.publish({
+                    type: 'UPDATE_LANES',
+                    lanes: this.state.data.lanes.map((lane) => {
+                        return {...lane, label: lane.cards.length.toString()}
+                    })
+                });
+            });
+
         } catch (e) {
         }
     }
@@ -233,6 +314,91 @@ class ConstraintsLogPage extends Component {
                 return 4;
             default:
                 return 1;
+        }
+    }
+
+    cardEditHandler = (laneId, cardId) => {
+        let targetLane = this.state.data.lanes.find((item) => item.id === laneId);
+        if (targetLane === undefined) return;
+        let targetCard = targetLane.cards.find((item) => item.id === cardId);
+        this.setState({
+            selected_card: targetCard,
+        })
+        this.editConstraintModalHandler();
+    }
+
+    addComment = () => {
+        if (this.state.selected_card === undefined) return;
+        if (this.state.comment_request) return;
+        let comment = document.getElementById('add_comment_text').value.trim();
+        if (comment.length) {
+            this.setState({
+                comment_request: true
+            });
+            try {
+                getBackendAPI().addComment(comment, this.props.user._id, this.state.selected_card.id).then((new_comment) => {
+                    document.getElementById('add_comment_text').value = "";
+                    this.state.selected_card.comments = [new_comment].concat(this.state.selected_card.comments);
+                    this.setState({
+                        comment_request: false
+                    });
+                });
+            } catch (e) {
+                this.setState({
+                    comment_request: false
+                });
+            }
+
+        }
+    }
+
+    addCheckList = () => {
+        if (this.state.selected_card === undefined) return;
+        if (this.state.checklist_request) return;
+        let check = document.getElementById('add_checklist_text').value.trim();
+        if (check.length) {
+            let current_checkList = this.state.selected_card.check_list;
+            current_checkList.push(check);
+            this.setState({
+                checklist_request: true
+            });
+            try {
+                getBackendAPI().addCheckList(current_checkList.join(), this.state.selected_card.id).then((res) => {
+                    document.getElementById('add_checklist_text').value = "";
+                    this.state.selected_card.check_list = current_checkList;
+                    this.setState({
+                        checklist_request: false
+                    });
+                });
+            } catch (e) {
+                this.setState({
+                    checklist_request: false
+                });
+            }
+        }
+    }
+
+    updateConstraintInfo = () => {
+        if (this.state.selected_card === undefined) return;
+        if (this.state.update_request) return;
+        let title = document.getElementById('edit_constraint').value.trim();
+        if (title.length && title !== this.state.selected_card.constraint) {
+            this.setState({
+                update_request: true,
+                editConstraintModal: false
+            });
+            try {
+                getBackendAPI().updateConstraint(this.state.selected_card.id, title).then((res) => {
+                    this.state.selected_card.constraint = title;
+                    this.setState({
+                        update_request: false
+                    });
+                })
+            } catch (e) {
+                this.setState({
+                    update_request: false
+                });
+            }
         }
     }
 
@@ -324,15 +490,6 @@ class ConstraintsLogPage extends Component {
                                                         name="checklist"
                                                     />
                                                 </Col>
-                                                <Col lg="12" className="form-group">
-                                                    <Label for="comments">Comments</Label>
-                                                    <Input
-                                                        ref={(r) => this.comments = r}
-                                                        type="text"
-                                                        id="comments"
-                                                        name="comments"
-                                                    />
-                                                </Col>
                                             </Row>
                                         </div>
 
@@ -356,6 +513,123 @@ class ConstraintsLogPage extends Component {
                                         </button>
                                     </div>
                                 </Modal>
+                                <Modal
+                                    className="modal-lg modal-dialog-centered"
+                                    isOpen={this.state.editConstraintModal}
+                                    toggle={this.editConstraintModalHandler}
+                                >
+                                    <div className="modal-header">
+                                        <h5
+                                            className="modal-title mt-0"
+                                            id="add_team_modal"
+                                        >
+                                            Edit Constraint
+                                        </h5>
+                                        <button
+                                            onClick={() =>
+                                                this.setState({editConstraintModal: false})
+                                            }
+                                            type="button"
+                                            className="close"
+                                            data-dismiss="modal"
+                                            aria-label="Close"
+                                        >
+                                            <span aria-hidden="true">&times;</span>
+                                        </button>
+                                    </div>
+                                    <div className="modal-body">
+                                        {this.state.selected_card !== undefined ? <div className="mt-4">
+                                            <Row className="align-items-end">
+                                                <Col lg="12" className="form-group">
+                                                    <Label for="constraint">Constraint</Label>
+                                                    <Input
+                                                        ref={(r) => this.edit_constraint = r}
+                                                        type="text"
+                                                        id="edit_constraint"
+                                                        name="edit_constraint"
+                                                        defaultValue={this.state.selected_card.constraint}
+                                                    />
+                                                </Col>
+                                                <Col lg="12" className="form-group">
+                                                    <Label for="checklist">Checklist</Label>
+                                                    {
+                                                        this.state.selected_card.check_list.map((item, index) => (
+                                                            <div className="custom-control custom-checkbox" key={index}>
+                                                                <input type="checkbox" className="custom-control-input" id={"edit_checkbox" + this.state.selected_card.id + "_" + index} defaultChecked={this.state.selected_card.checked_list.includes(item)} readOnly={true} disabled={true}/>
+                                                                <label className="custom-control-label" htmlFor={"edit_checkbox" + this.state.selected_card.id + "_" + index}>{item}</label>
+                                                            </div>
+                                                        ))
+                                                    }
+                                                </Col>
+                                                <Col md="10" className="form-group">
+                                                    <Input
+                                                        id="add_checklist_text"
+                                                        name="add_checklist_text"
+                                                        type="text"
+                                                        className="inner form-control"
+                                                        placeholder="Enter the checklist name"
+                                                    />
+                                                </Col>
+                                                <Col md="2" className="form-group">
+                                                    <Button
+                                                        onClick={this.addCheckList}
+                                                        color="primary"
+                                                        className="btn-block inner"
+                                                        style={{width: "100%"}}
+                                                    >
+                                                        {" "}
+                                                        Add{" "}
+                                                    </Button>
+                                                </Col>
+                                                <Col md="10" className="form-group">
+                                                    <Label for="constraint">Add Comment:</Label>
+                                                    <Input
+                                                        id="add_comment_text"
+                                                        name="add_comment_text"
+                                                        type="text"
+                                                        className="inner form-control"
+                                                        placeholder="Enter the Comment"
+                                                    />
+                                                </Col>
+                                                <Col md="2" className="form-group">
+                                                    <Button
+                                                        onClick={this.addComment}
+                                                        color="primary"
+                                                        className="btn-block inner"
+                                                        style={{width: "100%"}}
+                                                    >
+                                                        {" "}
+                                                        Add{" "}
+                                                    </Button>
+                                                </Col>
+                                                <Col lg="12" className="form-group">
+                                                    <Label for="constraint">Comments:</Label>
+                                                    {this.state.selected_card.comments.map((item, index) => (
+                                                        <div key={index}>item.name</div>
+                                                    ))}
+                                                </Col>
+                                            </Row>
+                                        </div> : <div className="mt-4 text-center">Loading</div>}
+                                    </div>
+                                    <div className="modal-footer">
+                                        <button
+                                            type="button"
+                                            className="btn btn-primary"
+                                            onClick={this.updateConstraintInfo}
+                                        >
+                                            Update
+                                        </button>
+                                        <button
+                                            type="button"
+                                            className="btn btn-secondary"
+                                            onClick={() =>
+                                                this.setState({editConstraintModal: false})
+                                            }
+                                        >
+                                            Close
+                                        </button>
+                                    </div>
+                                </Modal>
                             </div>
                         </Col>
                     </Row>
@@ -366,9 +640,12 @@ class ConstraintsLogPage extends Component {
                         laneDraggable={false}
                         className="boardContainer"
                         components={{Card: ConstraintCard}}
-                        onCardClick={(cardId) => alert("Test")}
+                        onCardClick={(laneId, metadata, cardId) => this.cardEditHandler(cardId, laneId)}
+                        onCardUpdate={(laneId, card) => console.log(card)}
                         onCardMoveAcrossLanes={this.onCardMoveAcrossLanes}
                         eventBusHandle={this.setEventBus}
+
+                        style={{backgroundColor: "#404040", justifyContent: "center"}}
                     />
                 </div>
             </React.Fragment>
