@@ -884,9 +884,33 @@ class BackendAPI {
                     _id
                 }
             }`, (res) => {
+                if (res.update_constraint._id) {
+                    resolve(res.update_constraint);
+                } else {
+                    reject("Register Failed");
+                }
             }, error => {
                 reject(this._handleError(error));
             });
+        });
+    }
+
+    updateConstraintContent = (constraint_id, checked_list) => {
+        return new Promise((resolve, reject) => {
+            postCall(`mutation{
+                update_constraint_content(constraint_id: "${constraint_id}", checked_list: "${checked_list}"){
+                    _id
+                }
+            }`, (res) => {
+                if (res.update_constraint_content._id) {
+                    resolve(res.update_constraint_content);
+                } else {
+                    reject("Register Failed");
+                }
+            }, error => {
+                reject(this._handleError(error));
+            })
+
         });
     }
 

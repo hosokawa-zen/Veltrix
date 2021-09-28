@@ -905,6 +905,21 @@ const Mutation = new GraphQLObjectType({
                 constraint.updatedAt = now;
                 return constraint.save();
             }
+        },
+
+        update_constraint_content: {
+            type: ConstraintsAttributeType,
+            args: {
+                constraint_id: {type: GraphQLString},
+                checked_list: {type: GraphQLString},
+            },
+            async resolve(parent, args) {
+                const now = Date.now();
+                let constraint = await ConstraintsAttribute.findById(args.constraint_id);
+                constraint.checked_list = args.checked_list;
+                constraint.updatedAt = now;
+                return constraint.save();
+            }
         }
         //-------------2021-09-23 Alex-----------------
     }

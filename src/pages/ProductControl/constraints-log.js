@@ -83,8 +83,8 @@ const ConstraintCard = (
 class ConstraintsLogPage extends Component {
     constructor(props) {
         super(props);
+        this.data = {lanes: [{id: 'loading', title: 'loading..', cards: []}]};
         this.state = {
-            data: {lanes: [{id: 'loading', title: 'loading..', cards: []}]},
             teams: [],
             workPackages: [],
             addConstraintModal: false,
@@ -189,19 +189,11 @@ class ConstraintsLogPage extends Component {
                 }
             ]
         }
+        this.data = boardData;
         this.setState({
             teams: teams,
             workPackages: workPackages,
-            data: boardData
-        });
-    }
 
-    addConstraintToTrello(item) {
-        const {data} = this.state;
-        data.lanes[item.status - 1].cards.push(item);
-        console.log('add', item, data);
-        this.setState({
-            data: data
         });
     }
 
@@ -231,7 +223,6 @@ class ConstraintsLogPage extends Component {
         if (constraint.length && team.length && workPackage.length && checklist.length) {
             try {
                 getBackendAPI().addConstraint(constraint, this.props.user._id, team, workPackage, checklist, 1).then((new_constraint) => {
-                    console.log('constrant', new_constraint);
                     let item = {
                         id: new_constraint._id,
                         constraint: new_constraint.constraint,
@@ -242,12 +233,14 @@ class ConstraintsLogPage extends Component {
                         checked_list: new_constraint.checked_list.split(","),
                         comments: new_constraint.comments,
                         status: new_constraint.status,
+                        metadata: {id: new_constraint._id},
+                        laneId: "constraint"
                     };
-                    //this.addConstraintToTrello(item);
-                    this.state.eventBus.publish({type: 'ADD_CARD', laneId: 'constraint', card: item});
                     this.setState({
                         addConstraintModal: false,
                     });
+                    this.data.lanes[0].cards.push(item);
+                    this.state.eventBus.publish({type: 'ADD_CARD', laneId: 'constraint', card: item});
                 })
 
             } catch (e) {
@@ -257,42 +250,21 @@ class ConstraintsLogPage extends Component {
     }
 
     onCardMoveAcrossLanes = async (fromLaneId, toLaneId, cardId, addedIndex) => {
-        console.log(fromLaneId);
-        console.log(toLaneId);
-        console.log(cardId);
-        console.log(addedIndex);
         let sourceID = this.getStatusValue(fromLaneId);
         let targetID = this.getStatusValue(toLaneId);
-        if (sourceID === targetID) return;
         try {
             getBackendAPI().updateConstraintsPosition({_id: cardId, target: targetID, source: sourceID, user_id: this.props.user._id}).then((res) => {
-                //this.state.eventBus.publish({type: 'MOVE_CARD', fromLaneId: fromLaneId, toLaneId: toLaneId, cardId: cardId, index: addedIndex,});
-                /*this.state.eventBus.publish({
-                    type: 'UPDATE_LANES',
-                    lanes: this.state.data.lanes.map((lane) => {
-                        return {...lane, label: lane.cards.length.toString()}
-                    })
-                });*/
-                let sourceLane = this.state.data.lanes.find((item) => item.id === fromLaneId);
-                let targetCard = sourceLane.cards.find((card) => card.id === cardId);
-                sourceLane.cards.splice(sourceLane.cards.indexOf((card) => card.id === cardId), 1);
+                let sourceLane = this.data.lanes.find((item) => item.id === fromLaneId);
+                let targetLane = this.data.lanes.find((item) => item.id === toLaneId);
+                let sourceLaneIndex = this.data.lanes.indexOf(sourceLane);
+                let targetLaneIndex = this.data.lanes.indexOf(targetLane);
+                let targetCard = this.data.lanes[sourceLaneIndex].cards.find(item => item.id === cardId);
                 targetCard.laneId = toLaneId;
-                let targetLane = this.state.data.lanes.find((item) => item.id === toLaneId);
-                targetLane.cards.splice(addedIndex, 0, targetCard)
-                this.state.data.lanes[this.state.data.lanes.indexOf((item) => item.id === fromLaneId)] = sourceLane;
-                this.state.data.lanes[this.state.data.lanes.indexOf((item) => item.id === toLaneId)] = targetLane;
-                this.setState({});
-                /*this.state.eventBus.publish({
-                    type: 'UPDATE_LANE',
-                    lane: sourceLane,
-                });
-                this.state.eventBus.publish({
-                    type: 'UPDATE_LANE',
-                    lane: targetLane,
-                });*/
+                this.data.lanes[sourceLaneIndex].cards = this.data.lanes[sourceLaneIndex].cards.filter(item => item.id !== cardId)
+                this.data.lanes[targetLaneIndex].cards.splice(addedIndex, 0, targetCard);
                 this.state.eventBus.publish({
                     type: 'UPDATE_LANES',
-                    lanes: this.state.data.lanes.map((lane) => {
+                    lanes: this.data.lanes.map((lane) => {
                         return {...lane, label: lane.cards.length.toString()}
                     })
                 });
@@ -318,7 +290,7 @@ class ConstraintsLogPage extends Component {
     }
 
     cardEditHandler = (laneId, cardId) => {
-        let targetLane = this.state.data.lanes.find((item) => item.id === laneId);
+        let targetLane = this.data.lanes.find((item) => item.id === laneId);
         if (targetLane === undefined) return;
         let targetCard = targetLane.cards.find((item) => item.id === cardId);
         this.setState({
@@ -365,9 +337,11 @@ class ConstraintsLogPage extends Component {
             try {
                 getBackendAPI().addCheckList(current_checkList.join(), this.state.selected_card.id).then((res) => {
                     document.getElementById('add_checklist_text').value = "";
-                    this.state.selected_card.check_list = current_checkList;
+                    const {selected_card} = this.state;
+                    selected_card.check_list = current_checkList;
                     this.setState({
-                        checklist_request: false
+                        checklist_request: false,
+                        selected_card
                     });
                 });
             } catch (e) {
@@ -389,9 +363,11 @@ class ConstraintsLogPage extends Component {
             });
             try {
                 getBackendAPI().updateConstraint(this.state.selected_card.id, title).then((res) => {
-                    this.state.selected_card.constraint = title;
+                    const {selected_card} = this.state;
+                    selected_card.constraint = title;
                     this.setState({
-                        update_request: false
+                        update_request: false,
+                        selected_card
                     });
                 })
             } catch (e) {
@@ -399,6 +375,15 @@ class ConstraintsLogPage extends Component {
                     update_request: false
                 });
             }
+        }
+    }
+
+    checkboxUpdateHandler = (card_id, card) => {
+        let current_checked = card.checked_list.filter(item => item !== undefined && item !== "");
+        try {
+            getBackendAPI().updateConstraintContent(card.id, current_checked.join());
+        } catch (e) {
+
         }
     }
 
@@ -605,7 +590,17 @@ class ConstraintsLogPage extends Component {
                                                 <Col lg="12" className="form-group">
                                                     <Label for="constraint">Comments:</Label>
                                                     {this.state.selected_card.comments.map((item, index) => (
-                                                        <div key={index}>item.name</div>
+                                                        <div key={index} className="mb-2">
+                                                            <div className="d-flex">
+                                                                <div className="flex-shrink-0">
+                                                                    <i className="mdi mdi-account-circle font-size-24 align-middle mr-1"/>
+                                                                </div>
+                                                                <div className="flex-grow-1">
+                                                                    <h4 className="font-size-15 m-0">{item.user.name}</h4>
+                                                                    <small className="text-muted">{item.content}</small>
+                                                                </div>
+                                                            </div>
+                                                        </div>
                                                     ))}
                                                 </Col>
                                             </Row>
@@ -634,17 +629,16 @@ class ConstraintsLogPage extends Component {
                         </Col>
                     </Row>
                     <Board
-                        data={this.state.data}
+                        data={this.data}
                         draggable
                         cardDragClass="draggingCard"
                         laneDraggable={false}
                         className="boardContainer"
                         components={{Card: ConstraintCard}}
                         onCardClick={(laneId, metadata, cardId) => this.cardEditHandler(cardId, laneId)}
-                        onCardUpdate={(laneId, card) => console.log(card)}
+                        onCardUpdate={(cardId, card) => this.checkboxUpdateHandler(cardId, card)}
                         onCardMoveAcrossLanes={this.onCardMoveAcrossLanes}
                         eventBusHandle={this.setEventBus}
-
                         style={{backgroundColor: "#404040", justifyContent: "center"}}
                     />
                 </div>
