@@ -163,7 +163,7 @@ class ConstraintsLogPage extends Component {
                     label: lane1.length.toString(),
                     currentPage: 1,
                     cards: lane1,
-                    style: {backgroundColor: "grey", color: "white", width: "24%", minWidth: "270px"},
+                    style: {color: "white", width: "24%", minWidth: "270px"},
                 },
                 {
                     id: 'work_in_progress',
@@ -171,7 +171,7 @@ class ConstraintsLogPage extends Component {
                     label: lane2.length.toString(),
                     currentPage: 1,
                     cards: lane2,
-                    style: {backgroundColor: "grey", color: "white", width: "24%", minWidth: "270px"},
+                    style: {color: "white", width: "24%", minWidth: "270px"},
                 },
                 {
                     id: 'blocked',
@@ -179,14 +179,14 @@ class ConstraintsLogPage extends Component {
                     label: lane3.length.toString(),
                     currentPage: 1,
                     cards: lane3,
-                    style: {backgroundColor: "grey", color: "white", width: "24%", minWidth: "270px"},
+                    style: {color: "white", width: "24%", minWidth: "270px"},
                 }, {
                     id: 'completed',
                     title: 'Completed',
                     label: lane4.length.toString(),
                     currentPage: 1,
                     cards: lane4,
-                    style: {backgroundColor: "grey", color: "white", width: "24%", minWidth: "270px"},
+                    style: {color: "white", width: "24%", minWidth: "270px"},
                 }
             ]
         }
@@ -221,7 +221,7 @@ class ConstraintsLogPage extends Component {
         let team = document.getElementById("team").value.trim();
         let workPackage = document.getElementById("work_package").value.trim();
         let checklist = document.getElementById("checklist").value.trim();
-        if (constraint.length && team.length && workPackage.length && checklist.length) {
+        if (constraint.length && team.length && workPackage.length) {
             try {
                 getBackendAPI().addConstraint(constraint, this.props.user._id, team, workPackage, checklist, 1).then((new_constraint) => {
                     let item = {
@@ -230,7 +230,7 @@ class ConstraintsLogPage extends Component {
                         email: new_constraint.user.email,
                         team: new_constraint.team_info.name,
                         work_package: new_constraint.work_package_info.tag_name,
-                        check_list: new_constraint.check_list.split(","),
+                        check_list: checklist === "" ? [] : new_constraint.check_list.split(","),
                         checked_list: new_constraint.checked_list.split(","),
                         comments: new_constraint.comments,
                         status: new_constraint.status,

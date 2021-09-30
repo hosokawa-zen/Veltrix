@@ -10,10 +10,13 @@
 
 .boardContainer .smooth-dnd-container.horizontal section {
     text-align: start;
+    background: linear-gradient(180deg, grey 0%, rgba(0,0,0,0) 100%);
+
 }
 
 .boardContainer .smooth-dnd-container.vertical {
     width: 100%;
+    min-height: 500px;
 }
 
 .boardContainer .react-trello-lane {
