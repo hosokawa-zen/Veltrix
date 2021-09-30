@@ -1,10 +1,15 @@
-/*
+
 .boardContainer div {
     width: 100%;
 }
 
+
 .boardContainer .smooth-dnd-container.horizontal {
-    display: flex;
+    text-align: center;
+}
+
+.boardContainer .smooth-dnd-container.horizontal section {
+    text-align: start;
 }
 
 .boardContainer .smooth-dnd-container.vertical {
@@ -18,4 +23,4 @@
 .boardContainer article {
     width: 100%;
     max-width: unset;
-}*/
+}

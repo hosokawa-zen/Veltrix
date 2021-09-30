@@ -29,6 +29,7 @@ const ConstraintCard = (
 
     return (
         <MovableCardWrapper
+
         >
             <header
                 style={{
@@ -162,7 +163,7 @@ class ConstraintsLogPage extends Component {
                     label: lane1.length.toString(),
                     currentPage: 1,
                     cards: lane1,
-                    style: {backgroundColor: "rgba(255, 255, 255, 0.2)", color: "white"},
+                    style: {backgroundColor: "rgba(255, 255, 255, 0.2)", color: "white", width: "24%", minWidth: "270px"},
                 },
                 {
                     id: 'work_in_progress',
@@ -170,7 +171,7 @@ class ConstraintsLogPage extends Component {
                     label: lane2.length.toString(),
                     currentPage: 1,
                     cards: lane2,
-                    style: {backgroundColor: "rgba(255, 255, 255, 0.2)", color: "white"},
+                    style: {backgroundColor: "rgba(255, 255, 255, 0.2)", color: "white", width: "24%", minWidth: "270px"},
                 },
                 {
                     id: 'blocked',
@@ -178,14 +179,14 @@ class ConstraintsLogPage extends Component {
                     label: lane3.length.toString(),
                     currentPage: 1,
                     cards: lane3,
-                    style: {backgroundColor: "rgba(255, 255, 255, 0.2)", color: "white"},
+                    style: {backgroundColor: "rgba(255, 255, 255, 0.2)", color: "white", width: "24%", minWidth: "270px"},
                 }, {
                     id: 'completed',
                     title: 'Completed',
                     label: lane4.length.toString(),
                     currentPage: 1,
                     cards: lane4,
-                    style: {backgroundColor: "rgba(255, 255, 255, 0.2)", color: "white"},
+                    style: {backgroundColor: "rgba(255, 255, 255, 0.2)", color: "white", width: "24%", minWidth: "270px"},
                 }
             ]
         }
