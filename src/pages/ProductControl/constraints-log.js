@@ -242,6 +242,12 @@ class ConstraintsLogPage extends Component {
                     });
                     this.data.lanes[0].cards.push(item);
                     this.state.eventBus.publish({type: 'ADD_CARD', laneId: 'constraint', card: item});
+                    this.state.eventBus.publish({
+                        type: 'UPDATE_LANES',
+                        lanes: this.data.lanes.map((lane) => {
+                            return {...lane, label: lane.cards.length.toString()}
+                        })
+                    });
                 })
 
             } catch (e) {

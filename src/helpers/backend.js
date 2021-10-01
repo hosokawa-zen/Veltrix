@@ -214,6 +214,24 @@ class BackendAPI {
         });
     };
 
+    reset = () => {
+        return new Promise((resolve, reject) => {
+            getCall(`{
+        reset{
+          success
+         }
+        }`, (res) => {
+                    if (res.reset) {
+                        resolve(res.reset);
+                    }
+                },
+                error => {
+                    reject(this._handleError(error));
+                }
+            );
+        });
+    }
+
     setLoggeedInUser = user => {
         localStorage.setItem("authUser", JSON.stringify(user));
     };

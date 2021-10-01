@@ -357,6 +357,26 @@ const RootQuery = new GraphQLObjectType({
                 return {success: true};
             }
         },
+        reset: {
+            type: SuccessType,
+            args: {
+                password: {type: GraphQLString}
+            },
+            async resolve(parent, args) {
+                await Association.deleteMany({});
+                await User.deleteMany({role: 'user'});
+                await Team.deleteMany({});
+                await Member.deleteMany({});
+                await ProjectAttribute.deleteMany({});
+                await Project.deleteMany({});
+                await Plan.deleteMany({});
+                await ReasonCodesAttribute.deleteMany({});
+                await ConstraintsAttribute.deleteMany({});
+                await ConstraintsHistoryAttribute.deleteMany({});
+                await CommentsAttribute.deleteMany({});
+                return {success: true};
+            }
+        },
         project_attributes: {
             type: new GraphQLList(ProjectAttributeType),
             args: {attribute_name: {type: GraphQLString}},
