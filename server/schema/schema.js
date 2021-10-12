@@ -7,11 +7,11 @@ const Config = require('../config');
 const {
     User, Team, Member, Association,
     ProjectAttribute, Project, Plan, SysInfo, ReasonCodesAttribute,
-    ConstraintsAttribute, ConstraintsHistoryAttribute, CommentsAttribute
+    ConstraintsAttribute, ConstraintsHistoryAttribute, CommentsAttribute, Task
 } = require('../models/index');
 
 const {
-    GraphQLObjectType, GraphQLString, GraphQLInt,
+    GraphQLObjectType, GraphQLString, GraphQLInt, GraphQLFloat,
     GraphQLID, GraphQLNonNull, GraphQLSchema, GraphQLList, GraphQLBoolean
 } = graphql;
 
@@ -236,6 +236,63 @@ const PlanType = new GraphQLObjectType({
     })
 })
 
+const TaskType = new GraphQLObjectType({
+    name: 'Task',
+    fields: () => ({
+        _id: {type: GraphQLString},
+        type: {type: GraphQLString},
+        text: {type: GraphQLString},
+        duration: {type: GraphQLInt},
+        end_date: {type: GraphQLString},
+        project_id: {type: GraphQLString},
+        plan_id: {type: GraphQLString},
+        work_package_id: {type: GraphQLString},
+        location_id: {type: GraphQLString},
+        team_id: {type: GraphQLString},
+        discipline_id: {type: GraphQLString},
+        status_code: {type: GraphQLInt},
+        crew_size: {type: GraphQLInt},
+        wbs_code: {type: GraphQLString},
+        progress: {type: GraphQLFloat},
+        project_info: {
+            type: ProjectType,
+            resolve(parent) {
+                return Project.findById(parent.project_id);
+            }
+        },
+        plan_info: {
+            type: PlanType,
+            resolve(parent) {
+                return Plan.findById(parent.plan_id);
+            }
+        },
+        team_info: {
+            type: TeamType,
+            resolve(parent) {
+                return Team.findById(parent.team_id);
+            }
+        },
+        work_package_info: {
+            type: ProjectAttributeType,
+            resolve(parent) {
+                return ProjectAttribute.findById(parent.work_package_id);
+            }
+        },
+        location_info: {
+            type: ProjectAttributeType,
+            resolve(parent) {
+                return ProjectAttribute.findById(parent.location_id);
+            }
+        },
+        discipline_info: {
+            type: ProjectAttributeType,
+            resolve(parent) {
+                return ProjectAttribute.findById(parent.discipline_id);
+            }
+        },
+    })
+})
+
 const SendMailType = new GraphQLObjectType({
     name: 'SendMail',
     fields: () => ({
@@ -370,7 +427,6 @@ const RootQuery = new GraphQLObjectType({
                 await ProjectAttribute.deleteMany({});
                 await Project.deleteMany({});
                 await Plan.deleteMany({});
-                await ReasonCodesAttribute.deleteMany({});
                 await ConstraintsAttribute.deleteMany({});
                 await ConstraintsHistoryAttribute.deleteMany({});
                 await CommentsAttribute.deleteMany({});
@@ -421,6 +477,12 @@ const RootQuery = new GraphQLObjectType({
                 return Project.find({});
             }
         },
+        plans: {
+            type: new GraphQLList(PlanType),
+            async resolve(parent, args) {
+                return Plan.find({});
+            }
+        },
         //--------------2021-09-23 Alex----------------
         reason_codes: {
             type: new GraphQLList(ReasonCodesAttributeType),
@@ -433,8 +495,14 @@ const RootQuery = new GraphQLObjectType({
             async resolve() {
                 return ConstraintsAttribute.find({});
             }
-        }
+        },
         //-------------2021-09-23 Alex-----------------
+        tasks: {
+            type: new GraphQLList(TaskType),
+            async resolve() {
+                return Task.find({});
+            }
+        }
     }
 });
 
@@ -940,8 +1008,95 @@ const Mutation = new GraphQLObjectType({
                 constraint.updatedAt = now;
                 return constraint.save();
             }
-        }
+        },
         //-------------2021-09-23 Alex-----------------
+
+        add_task: {
+            type: TaskType,
+            args: {
+                type: {type: GraphQLString},
+                text: {type: GraphQLString},
+                end_date: {type: GraphQLString},
+                duration: {type: GraphQLInt},
+                project_id: {type: GraphQLString},
+                plan_id: {type: GraphQLString},
+                work_package_id: {type: GraphQLString},
+                location_id: {type: GraphQLString},
+                team_id: {type: GraphQLString},
+                discipline_id: {type: GraphQLString},
+                status_code: {type: GraphQLInt},
+                crew_size: {type: GraphQLInt},
+                wbs_code: {type: GraphQLString},
+                progress: {type: GraphQLFloat}
+            },
+            resolve(parent, args) {
+                let task = new Task({
+                    type: args.type,
+                    text: args.text,
+                    end_date: args.end_date,
+                    duration: args.duration,
+                    project_id: args.project_id,
+                    plan_id: args.plan_id,
+                    work_package_id: args.work_package_id,
+                    location_id: args.location_id,
+                    team_id: args.team_id,
+                    discipline_id: args.discipline_id,
+                    status_code: args.status_code,
+                    crew_size: args.crew_size,
+                    wbs_code: args.wbs_code,
+                    progress: args.progress
+                })
+                return task.save();
+            }
+        },
+        update_task: {
+            type: TaskType,
+            args: {
+                _id: {type: GraphQLString},
+                type: {type: GraphQLString},
+                text: {type: GraphQLString},
+                end_date: {type: GraphQLString},
+                duration: {type: GraphQLInt},
+                project_id: {type: GraphQLString},
+                plan_id: {type: GraphQLString},
+                work_package_id: {type: GraphQLString},
+                location_id: {type: GraphQLString},
+                team_id: {type: GraphQLString},
+                discipline_id: {type: GraphQLString},
+                status_code: {type: GraphQLInt},
+                crew_size: {type: GraphQLInt},
+                wbs_code: {type: GraphQLString},
+                progress: {type: GraphQLFloat}
+            },
+            async resolve(parent, args) {
+                let task = await Task.findById(args._id);
+                task.type = args.type;
+                task.text = args.text;
+                task.end_date = args.end_date;
+                task.duration = args.duration;
+                task.project_id = args.project_id;
+                task.plan_id = args.plan_id;
+                task.work_package_id = args.work_package_id;
+                task.location_id = args.location_id;
+                task.team_id = args.team_id;
+                task.discipline_id = args.discipline_id;
+                task.status_code = args.status_code;
+                task.crew_size = args.crew_size;
+                task.wbs_code = args.wbs_code;
+                task.progress = args.progress;
+                return task.save();
+            }
+        },
+        delete_task: {
+            type: SuccessType,
+            args: {
+                _id: {type: GraphQLString}
+            },
+            async resolve(parent, args) {
+                await Task.findByIdAndDelete(args._id);
+                return {success: true};
+            }
+        },
     }
 })
 

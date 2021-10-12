@@ -1,5 +1,5 @@
 import React, {Component} from "react";
-import {Row, Col, Input, Label, Button} from "reactstrap";
+import {Row, Col} from "reactstrap";
 import {Link} from "react-router-dom";
 
 import "react-draft-wysiwyg/dist/react-draft-wysiwyg.css";

@@ -21,6 +21,7 @@ class ProjectAttributesPage extends Component {
             disciplineTags: [],
             addDisciplineTagModal: false,
         };
+        this.tasks = [];
 
         this.addDisciplineModalHandler = this.addDisciplineModalHandler.bind(this);
         this.handleHor = this.handleHor.bind(this);
@@ -30,6 +31,10 @@ class ProjectAttributesPage extends Component {
     componentDidMount() {
     }
 
+    init = async () => {
+        let tasks = await getBackendAPI().getTasks();
+        this.setState({tasks: tasks.map((t, index) => ({id: index + 1, ...t}))});
+    }
     removeBodyCss() {
         document.body.classList.add("no_padding");
     }
@@ -326,7 +331,7 @@ class ProjectAttributesPage extends Component {
                                                         className="modal-title mt-0"
                                                         id="add_team_modal"
                                                     >
-                                                        Add Team
+                                                        Discipline Tag
                                                     </h5>
                                                     <button
                                                         onClick={() =>

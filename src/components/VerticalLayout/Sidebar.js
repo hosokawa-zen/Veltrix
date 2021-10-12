@@ -29,6 +29,9 @@ const SidebarContent = props => {
               <Link to="/constraints-log">Constraints Log</Link>
             </li>
             <li>
+              <Link to="/look-ahead-plan">Lookahead Plan</Link>
+            </li>
+            <li>
               <Link to="/make-ready-plan">Visual Planner</Link>
             </li>
             <li>

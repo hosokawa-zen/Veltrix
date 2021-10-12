@@ -10,6 +10,7 @@ const ConstraintsHistoryAttribute = require('./constraintsLogs');
 const Project = require('./project');
 const Plan = require('./plan');
 const SysInfo = require('./sysInfo');
+const Task = require('./task');
 
 module.exports = {
     User,
@@ -23,5 +24,6 @@ module.exports = {
     SysInfo,
     ConstraintsAttribute,
     ConstraintsHistoryAttribute,
-    CommentsAttribute
+    CommentsAttribute,
+    Task
 }

@@ -1031,6 +1031,187 @@ class BackendAPI {
         });
     }
 
+    // Task
+    addTask = ({type, text, end_date, duration, project_id, plan_id, work_package_id, location_id, team_id, status_code, discipline_id, crew_size, wbs_code, progress}) => {
+        return new Promise((resolve, reject) => {
+            postCall(`mutation{
+        add_task(type:"${type}", text:"${text}", end_date: "${end_date}", duration: ${duration}, project_id: "${project_id}", plan_id: "${plan_id}", 
+        work_package_id: "${work_package_id}", location_id: "${location_id}", team_id: "${team_id}", status_code: ${status_code}, discipline_id: ${discipline_id?`"${discipline_id}"`:discipline_id}, crew_size: ${crew_size}, wbs_code: "${wbs_code}", progress: ${progress}){
+            _id,
+            type,
+            text,
+            end_date,
+            duration,
+            project_id,
+            plan_id,
+            work_package_id,
+            location_id,
+            team_id,
+            discipline_id,
+            status_code,
+            crew_size,
+            wbs_code,
+            progress,
+            team_info{
+                name
+            },
+            work_package_info{
+                tag_name
+            },
+            project_info{
+                name
+            },
+            plan_info{
+                name
+            },
+            location_info{
+                tag_name
+            },
+            discipline_info{
+                tag_name
+            }
+        }
+      }`, (res) => {
+                if (res.add_task._id) {
+                    resolve(res.add_task);
+                } else {
+                    reject("Register Failed");
+                }
+            }, error => {
+                reject(this._handleError(error));
+            });
+        });
+    }
+
+    updateTask = ({_id, type, text, end_date, duration, project_id, plan_id, work_package_id, location_id, team_id, status_code, discipline_id, crew_size, wbs_code, progress}) => {
+        return new Promise((resolve, reject) => {
+            postCall(`mutation{
+        update_task(_id: "${_id}", type:"${type}", text:"${text}", end_date: "${end_date}", duration: ${duration}, project_id: "${project_id}", plan_id: "${plan_id}",
+        work_package_id: "${work_package_id}", location_id: "${location_id}", team_id: "${team_id}", status_code: ${status_code}, discipline_id: ${discipline_id?`"${discipline_id}"`:discipline_id}, crew_size: ${crew_size}, wbs_code: "${wbs_code}", progress: ${progress}){
+            _id,
+            type,
+            text,
+            end_date,
+            duration,
+            project_id,
+            plan_id,
+            work_package_id,
+            location_id,
+            team_id,
+            discipline_id,
+            status_code,
+            crew_size,
+            wbs_code,
+            progress,
+            team_info{
+                name
+            },
+            work_package_info{
+                tag_name
+            },
+            project_info{
+                name
+            },
+            plan_info{
+                name
+            },
+            location_info{
+                tag_name
+            },
+            discipline_info{
+                tag_name
+            }
+        }
+      }`, (res) => {
+                if (res.update_task._id) {
+                    resolve(res.update_task);
+                } else {
+                    reject("Register Failed");
+                }
+            }, error => {
+                reject(this._handleError(error));
+            });
+        });
+    }
+
+    /**
+     * Return All Tasks
+     */
+    getTasks = () => {
+        return new Promise((resolve, reject) => {
+            getCall(`{
+        tasks{
+            _id,
+            type,
+            text,
+            end_date,
+            duration,
+            project_id,
+            plan_id,
+            work_package_id,
+            location_id,
+            team_id,
+            discipline_id,
+            status_code,
+            crew_size,
+            wbs_code,
+            progress,
+            project_info{
+                name
+            },
+            plan_info{
+                name
+            },
+            team_info{
+                name
+            },
+            work_package_info{
+                tag_name
+            },
+            location_info{
+                tag_name
+            },
+            discipline_info{
+                tag_name
+            }
+         }
+        }`, (res) => {
+                    if (res.tasks) {
+                        resolve(res.tasks);
+                    }
+                },
+                error => {
+                    reject(this._handleError(error));
+                }
+            );
+        });
+    }
+
+    /**
+     * Delete Task
+     */
+
+    deleteTask = (_id) => {
+        return new Promise((resolve, reject) => {
+            postCall(`mutation{
+        delete_task(_id: "${_id}"){
+            success
+        }
+      }`,
+                (res) => {
+                    if (res.delete_task.success) {
+                        resolve(true);
+                    } else {
+                        reject("Delete Task Failed");
+                    }
+                },
+                error => {
+                    reject(this._handleError(error));
+                }
+            );
+        });
+    }
+
     //-------------2021-09-23 Alex-----------------
     /**
      * Handle the error

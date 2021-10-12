@@ -17,6 +17,7 @@ import CommitmentPlan from "../pages/ProductControl/commitment-plan";
 import MakeReadyPlan from "../pages/ProductControl/make-ready-plan";
 import StandardProcessLibrary from "../pages/ProductControl/standard-process-library";
 import Analytics from "../pages/ProductControl/analytics";
+import LookAheadPlan from "../pages/ProductControl/look-ahead-plan";
 
 // Digital Design
 import DigitalDesignView from "../pages/DigitalDesign/view";
@@ -41,6 +42,7 @@ const authProtectedRoutes = [
     // Product Control
     {path: "/constraints-log", component: ConstraintsLog},
     {path: "/make-ready-plan", component: MakeReadyPlan},
+    {path: "/look-ahead-plan", component: LookAheadPlan},
     {path: "/commitment-plan", component: CommitmentPlan},
     {path: "/standard-process-library", component: StandardProcessLibrary},
     {path: "/analytics", component: Analytics},

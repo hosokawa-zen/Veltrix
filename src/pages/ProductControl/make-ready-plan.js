@@ -90,11 +90,15 @@ class MakeReadyPlanPage extends Component {
 
   onSavePlan = (plan) => {
     const old = this.state.plans.find(p => p._id === plan._id);
+    let newPlans = [];
     if(old){
-      const newPlans = this.state.plans.map(p => p._id === plan._id?plan:p);
-      this.setState({plans: newPlans});
+      newPlans = this.state.plans.map(p => p._id === plan._id?plan:p);
     } else {
-      this.setState({plans: [...this.state.plans, plan]});
+      newPlans = [...this.state.plans, plan]
+    }
+
+    if(this.state.selectProject){
+      this.setState({plans: newPlans, projects: this.state.projects.map(p => p._id === this.state.selectProject._id?{...p, plans: newPlans}:p)});
     }
   }
 
