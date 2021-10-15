@@ -7,7 +7,7 @@ const Config = require('../config');
 const {
     User, Team, Member, Association,
     ProjectAttribute, Project, Plan, SysInfo, ReasonCodesAttribute,
-    ConstraintsAttribute, ConstraintsHistoryAttribute, CommentsAttribute, Task
+    ConstraintsAttribute, ConstraintsHistoryAttribute, CommentsAttribute, Task, Link
 } = require('../models/index');
 
 const {
@@ -240,10 +240,12 @@ const TaskType = new GraphQLObjectType({
     name: 'Task',
     fields: () => ({
         _id: {type: GraphQLString},
+        id: {type: GraphQLString},
         type: {type: GraphQLString},
         text: {type: GraphQLString},
         duration: {type: GraphQLInt},
-        end_date: {type: GraphQLString},
+        date: {type: GraphQLString},
+        parent: {type: GraphQLString},
         project_id: {type: GraphQLString},
         plan_id: {type: GraphQLString},
         work_package_id: {type: GraphQLString},
@@ -290,6 +292,17 @@ const TaskType = new GraphQLObjectType({
                 return ProjectAttribute.findById(parent.discipline_id);
             }
         },
+    })
+})
+
+const LinkType = new GraphQLObjectType({
+    name: 'Link',
+    fields: () => ({
+        _id: {type: GraphQLString},
+        id: {type: GraphQLString},
+        type: {type: GraphQLString},
+        source: {type: GraphQLString},
+        target: {type: GraphQLString},
     })
 })
 
@@ -501,6 +514,12 @@ const RootQuery = new GraphQLObjectType({
             type: new GraphQLList(TaskType),
             async resolve() {
                 return Task.find({});
+            }
+        },
+        links: {
+            type: new GraphQLList(LinkType),
+            async resolve() {
+                return Link.find({});
             }
         }
     }
@@ -1014,10 +1033,12 @@ const Mutation = new GraphQLObjectType({
         add_task: {
             type: TaskType,
             args: {
+                id: {type: GraphQLString},
                 type: {type: GraphQLString},
                 text: {type: GraphQLString},
-                end_date: {type: GraphQLString},
+                date: {type: GraphQLString},
                 duration: {type: GraphQLInt},
+                parent: {type: GraphQLString},
                 project_id: {type: GraphQLString},
                 plan_id: {type: GraphQLString},
                 work_package_id: {type: GraphQLString},
@@ -1031,10 +1052,12 @@ const Mutation = new GraphQLObjectType({
             },
             resolve(parent, args) {
                 let task = new Task({
+                    id: args.id,
                     type: args.type,
                     text: args.text,
-                    end_date: args.end_date,
+                    date: args.date,
                     duration: args.duration,
+                    parent: args.parent,
                     project_id: args.project_id,
                     plan_id: args.plan_id,
                     work_package_id: args.work_package_id,
@@ -1053,10 +1076,12 @@ const Mutation = new GraphQLObjectType({
             type: TaskType,
             args: {
                 _id: {type: GraphQLString},
+                id: {type: GraphQLString},
                 type: {type: GraphQLString},
                 text: {type: GraphQLString},
-                end_date: {type: GraphQLString},
+                date: {type: GraphQLString},
                 duration: {type: GraphQLInt},
+                parent: {type: GraphQLString},
                 project_id: {type: GraphQLString},
                 plan_id: {type: GraphQLString},
                 work_package_id: {type: GraphQLString},
@@ -1070,10 +1095,12 @@ const Mutation = new GraphQLObjectType({
             },
             async resolve(parent, args) {
                 let task = await Task.findById(args._id);
+                task.id = args.id,
                 task.type = args.type;
                 task.text = args.text;
-                task.end_date = args.end_date;
+                task.date = args.date;
                 task.duration = args.duration;
+                task.parent = args.parent,
                 task.project_id = args.project_id;
                 task.plan_id = args.plan_id;
                 task.work_package_id = args.work_package_id;
@@ -1094,6 +1121,52 @@ const Mutation = new GraphQLObjectType({
             },
             async resolve(parent, args) {
                 await Task.findByIdAndDelete(args._id);
+                return {success: true};
+            }
+        },
+        add_link: {
+            type: LinkType,
+            args: {
+                id: {type: GraphQLString},
+                type: {type: GraphQLString},
+                source: {type: GraphQLString},
+                target: {type: GraphQLString}
+            },
+            resolve(parent, args) {
+                let link = new Link({
+                    id: args.id,
+                    type: args.type,
+                    source: args.source,
+                    target: args.target
+                })
+                return link.save();
+            }
+        },
+        update_link: {
+            type: LinkType,
+            args: {
+                _id: {type: GraphQLString},
+                id: {type: GraphQLString},
+                type: {type: GraphQLString},
+                source: {type: GraphQLString},
+                target: {type: GraphQLString},
+            },
+            async resolve(parent, args) {
+                let link = await Link.findById(args._id);
+                link.id = args.id;
+                link.type = args.type;
+                link.source = args.source;
+                link.target = args.target;
+                return link.save();
+            }
+        },
+        delete_link: {
+            type: SuccessType,
+            args: {
+                _id: {type: GraphQLString}
+            },
+            async resolve(parent, args) {
+                await Link.findByIdAndDelete(args._id);
                 return {success: true};
             }
         },
