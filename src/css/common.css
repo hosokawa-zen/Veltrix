@@ -142,3 +142,11 @@
 .gantt_task_row.group_row{
     background-color: rgba(232, 232, 232, 0.6);
 }
+
+.gantt_task_cell.week_end {
+    background-color: #EFF5FD;
+}
+
+.gantt_task_row.gantt_selected .gantt_task_cell.week_end {
+    background-color: #F8EC9C;
+}

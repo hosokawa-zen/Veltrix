@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import 'dhtmlx-gantt/codebase/dhtmlxgantt.css';
-import {Col, InputGroup, Label, Modal, Row} from "reactstrap";
+import {Button, Col, InputGroup, Label, Modal, Row} from "reactstrap";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import {getBackendAPI} from "../helpers/backend";
@@ -21,6 +21,7 @@ export const STATUS_CONSTRAINED = 3;
 export const STATUS_COMPLETED = 4;
 export const STATUS_COMPLETED_NO_PLANNED = 5;
 export const STATUS_COMMITMENT_PLAN = 6;
+
 const statusCodes = [
         {_id: STATUS_RELEASED, text: 'Released'},
         {_id: STATUS_RELEASED_AT_RISK, text: 'Released At Risk'},
@@ -60,6 +61,7 @@ export default class Gantt extends Component {
             taskDisciplineId: null,
             duration: 0,
             taskWBSCode: '',
+            taskIndex: null,
             selectParentId: null,
             openAddDlg: false,
         };
@@ -67,6 +69,7 @@ export default class Gantt extends Component {
         this.teams = {};
         this.links = [];
         this.projects = {};
+        this.invalidLink = null;
         this.init();
     }
 
@@ -74,10 +77,16 @@ export default class Gantt extends Component {
     }
 
     init = async () => {
-        const taskInfos = await getBackendAPI().getTasks();
+        const taskInfos = (await getBackendAPI().getTasks()).map(t => {
+            let metadata = t.metadata?JSON.parse(t.metadata.replaceAll("'", "\"")):{};
+            return {...t, metadata: {...metadata}};
+        });
         this.links = await getBackendAPI().getLinks();
 
         let tasks = [];
+
+        // Order
+        taskInfos.sort((a, b) => a.metadata.index - b.metadata.index);
 
         // Generate projects
         taskInfos.forEach((t, index) => {
@@ -87,6 +96,8 @@ export default class Gantt extends Component {
                     id: t.id,
                     type: TASK_TYPE_PROJECT,
                     text: t.text,
+                    start_date: t.date,
+                    render: "split",
                     open: true
                 }
                 if(Number(t.id) >= projectId){
@@ -103,17 +114,19 @@ export default class Gantt extends Component {
                 this.tasks.push({...t, id: Number(t.id), parent: Number(t.parent)?Number(t.parent):this.projects[project_key].id});
 
                 if(t.type === TASK_TYPE_MILESTONE){
-                    tasks.push({id: t.id, text: t.text, type: t.type, start_date: new Date(t.date), team_id: t.team_id, parent: this.projects[project_key].id, open: true});
+                    tasks.push({id: t.id, text: t.text, type: t.type, start_date: t.date, team_id: t.team_id, parent: Number(this.projects[project_key].id), rollup: true, open: true});
                     if(!this.teams[t.team_id]){
                         this.teams[t.team_id] = {id: t.team_id, text: t.team_info.name, parent: null};
                     }
                 } else {
-                    tasks.push({id: t.id, text: t.text, type: t.type, end_date: new Date(t.date), duration: t.duration, progress: t.progress, team_id: t.team_id, parent: t.parent});
+                    tasks.push({id: t.id, text: t.text, type: t.type, end_date: t.date, duration: t.duration, progress: t.progress, team_id: t.team_id, parent: t.parent});
                 }
+            } else {
+                this.tasks.push({...t, id: Number(t.id), parent: Number(t.parent)});
             }
         })
 
-        console.log('load', this.projects, this.tasks, this.teams);
+        console.log('load', this.projects, tasks, this.teams);
         // ----------------------------------------------------------------------------
 
         let resourceConfig = {
@@ -189,8 +202,55 @@ export default class Gantt extends Component {
         gantt.templates.resource_cell_value = function(start_date, end_date, resource, tasks){
             return "<div>" + (resourceMode === "hours"?tasks.length * 8: tasks.length) + "</div>";
         };
+
+        // back planning
+        gantt.config.schedule_from_end = true;
+
+        // resource
         gantt.config.resource_store = "resource";
         gantt.config.resource_property = "team_id";
+
+        // working days
+        gantt.config.work_time = true;
+        gantt.config.correct_work_time = true;
+
+        gantt.config.min_column_width = 60;
+        gantt.config.duration_unit = "day";
+        gantt.config.scale_height = 20 * 3;
+        gantt.config.row_height = 30;
+
+
+        var weekScaleTemplate = function (date) {
+            var dateToStr = gantt.date.date_to_str("%d %M");
+            var weekNum = gantt.date.date_to_str("(week %W)");
+            var endDate = gantt.date.add(gantt.date.add(date, 1, "week"), -1, "day");
+            return dateToStr(date) + " - " + dateToStr(endDate) + " " + weekNum(date);
+        };
+
+        gantt.config.scales = [
+            {unit: "month", step: 1, format: "%F, %Y"},
+            {unit: "week", step: 1, format: weekScaleTemplate},
+            {unit: "day", step: 1, format: "%D, %d"}
+        ];
+
+        gantt.templates.timeline_cell_class = function (task, date) {
+            if (!gantt.isWorkTime(date))
+                return "week_end";
+            return "";
+        };
+
+        // split task
+        gantt.config.open_split_tasks = true;
+
+        // roll up task
+        gantt.locale.labels.section_rollup = "Rollup";
+        gantt.templates.rightside_text = function (start, end, task) {
+            if (task.type === TASK_TYPE_MILESTONE) {
+                return task.text;
+            }
+            return "";
+        };
+
         gantt.config.order_branch = true;
         gantt.config.open_tree_initially = true;
         gantt.config.layout = {
@@ -228,6 +288,16 @@ export default class Gantt extends Component {
                 {view: "scrollbar", id: "scrollHor"}
             ]
         };
+        gantt.config.columns = [
+            {name: "text", tree: true, width: 300, resize: true},
+            {name: "duration", align: "center", width: 70, resize: true},
+            {name: "add_task", label: "<div role=\"button\" aria-label=\"New task\" class=\"gantt_add\"></div>",  width: 44, template: function (task) {
+              if(task.type === TASK_TYPE_TASK){
+                  return '';
+              }
+              return '<div role="button" aria-label="New task" class="gantt_add"></div>';
+            }}
+        ];
 
         let resourceMode = "hours";
         gantt.attachEvent("onGanttReady", function(){
@@ -265,9 +335,11 @@ export default class Gantt extends Component {
         // Attach Events
         gantt.showLightbox = this.onShowLightBox;
         gantt.attachEvent("onAfterTaskUpdate", this.onUpdateTask);
+        gantt.attachEvent("onBeforeLinkAdd", this.onCheckLink);
         gantt.attachEvent("onAfterLinkAdd", this.onLinkCreated);
         gantt.attachEvent("onAfterLinkUpdate", this.onLinkUpdated);
         gantt.attachEvent("onAfterLinkDelete", this.onLinkDeleted);
+        gantt.attachEvent("onRowDragEnd", this.onRowDrag);
 
         resourcesStore.attachEvent("onParse", function(){
             let people = [];
@@ -308,6 +380,7 @@ export default class Gantt extends Component {
 
     onShowLightBox = (id) => {
         let task = gantt.getTask(id);
+        console.log('open task', task);
         if(task.$new){
             const selectParentId = Number(task.parent);
             if(selectParentId){
@@ -320,7 +393,7 @@ export default class Gantt extends Component {
                         _taskId: null,
                         taskType: TASK_TYPE_TASK,
                         taskText: '',
-                        taskDate: new Date(),
+                        taskDate: new Date(task.end_date),
                         taskParent: selectParentId,
                         taskProjectId: parentTask.project_id,
                         taskPlanId: parentTask.plan_id,
@@ -332,6 +405,7 @@ export default class Gantt extends Component {
                         taskDisciplineId: null,
                         duration: 0,
                         taskWBSCode: '',
+                        taskIndex: task.$index,
                         selectParentId: selectParentId,
                         openAddDlg: true,
                     });
@@ -344,7 +418,7 @@ export default class Gantt extends Component {
                 _taskId: null,
                 taskType: TASK_TYPE_MILESTONE,
                 taskText: '',
-                taskDate: new Date(),
+                taskDate: new Date(task.end_date),
                 taskParent: task.parent,
                 taskProjectId: null,
                 taskPlanId: null,
@@ -356,6 +430,7 @@ export default class Gantt extends Component {
                 taskDisciplineId: null,
                 duration: 0,
                 taskWBSCode: '',
+                taskIndex: task.$index,
                 selectParentId: null,
                 openAddDlg: true,
             });
@@ -369,7 +444,7 @@ export default class Gantt extends Component {
                     _taskId: targetTask._id,
                     taskType: targetTask.type,
                     taskText: task.text,
-                    taskDate: new Date(targetTask.type===TASK_TYPE_MILESTONE?task.start_date:task.end_date),
+                    taskDate: new Date(task.end_date),
                     taskParent: targetTask.parent,
                     taskProjectId: targetTask.project_id,
                     taskPlanId: targetTask.plan_id,
@@ -381,6 +456,7 @@ export default class Gantt extends Component {
                     taskDisciplineId: targetTask.discipline_id,
                     duration: targetTask.duration,
                     taskWBSCode: targetTask.wbs_code,
+                    taskIndex: task.$index,
                     selectParentId: targetTask.parent,
                     openAddDlg: true
                 });
@@ -390,22 +466,39 @@ export default class Gantt extends Component {
 
     onUpdateTask = async (id,item) =>{
         console.log('onUpdate', id, item);
-        const updateTask = this.tasks.find(t => t.id == id);
+        const updateTask = Object.assign({}, this.tasks.find(t => t.id == id));
         if(updateTask){
             updateTask.date = updateTask.type === TASK_TYPE_MILESTONE?date_str_format(item.start_date, DATE_STRING_FORMAT):date_str_format(item.end_date, DATE_STRING_FORMAT);
             updateTask.duration = item.duration;
             updateTask.progress = item.progress;
+            updateTask.metadata = JSON.stringify(updateTask.metadata).replace(/"/g, "'");
             try {
                 const taskInfo = await getBackendAPI().updateTask(updateTask);
-                this.tasks = this.tasks.map(t => t.id === taskInfo.id?updateTask:t);
+                this.tasks = this.tasks.map(t => t.id === taskInfo.id? {...t, date: updateTask.date, duration: updateTask.duration, progress: updateTask.progress }:t);
             } catch (e){
 
             }
         }
     }
 
+    onCheckLink = async (id, link) => {
+        if (link.type == 0){
+            let sourceTask = gantt.getTask(link.source);
+            let targetTask = gantt.getTask(link.target);
+            if (sourceTask.end_date > targetTask.start_date){
+                alert("This link is illegal");
+                this.invalidLink = id;
+                return false;
+            }
+        }
+    }
+
     onLinkCreated = async (id, link) => {
-        console.log('created', id, link);
+        if(id === this.invalidLink){
+            console.log('invalid Link', id, link);
+            gantt.deleteLink(id);
+            return false;
+        }
         const linkData = {
             id: id,
             source: link.source,
@@ -415,6 +508,16 @@ export default class Gantt extends Component {
         const newLink = await getBackendAPI().createLink(linkData);
         this.links.push(newLink);
     };
+
+    updateStatusCode = async (id) => {
+        let task = this.tasks.find(t => t.id == id);
+        if(task){
+           const updatedTasks = await getBackendAPI().updateStatusCode(task._id);
+           const updateStatuses = {};
+           updatedTasks.forEach(t => updateStatuses[t._id] = t.status_code);
+           this.tasks = this.tasks.map(t => ({...t, status_code: updateStatuses[t._id]}));
+        }
+    }
 
     onLinkUpdated = async (id, link) => {
         console.log('updated', id, link);
@@ -426,6 +529,37 @@ export default class Gantt extends Component {
         if(targetLink){
             await getBackendAPI().deleteLink(targetLink._id);
         }
+    }
+
+    onRowDrag = async (id, target) => {
+        if(!target) return;
+        let targetTaskId = null;
+        if(target.indexOf('next:') > -1){
+            targetTaskId = target.substr('next:'.length);
+        } else {
+            targetTaskId = target;
+        }
+        let task = gantt.getTask(id);
+        let targetTask = gantt.getTask(targetTaskId);
+
+        if(task){
+            await this.updateMetadata(id, {index: task.$index});
+        }
+
+        if(targetTask){
+            await this.updateMetadata(targetTaskId, {index: targetTask.$index});
+        }
+    }
+
+    updateMetadata = async (id, metadata) => {
+        let updateTask = this.tasks.find(t => t.id == id);
+        if(!updateTask){
+            return;
+        }
+        let taskMetadata = updateTask.metadata??{};
+        taskMetadata = {...taskMetadata, ...metadata};
+        updateTask.metadata = JSON.stringify(taskMetadata).replaceAll("\"", "'");
+        await getBackendAPI().updateTask(updateTask);
     }
 
     isValid = () => {
@@ -446,16 +580,15 @@ export default class Gantt extends Component {
 
         const description = document.getElementById('description').value.trim();
         if(!description.length){ alert('Please fill description'); return false; }
-        const wbs_code = document.getElementById('wbs_code').value.trim();
-        if(!wbs_code.length){ alert('Please fill wbs code'); return false; }
         return true;
     }
 
     onSaveTask = async () => {
         if(this.isValid()){
-            const {_taskId, taskId, taskType, taskDate, taskParent, taskProjectId, taskPlanId, taskWorkPackageId, taskLocationIds, taskTeamId, taskStatusCode, taskDisciplineId, taskCrewSize, duration} = this.state;
+            const {_taskId, taskId, taskType, taskDate, taskParent, taskProjectId, taskPlanId, taskWorkPackageId, taskLocationIds, taskTeamId, taskStatusCode, taskDisciplineId, taskCrewSize, taskIndex, duration} = this.state;
             const description = document.getElementById('description').value.trim();
             const wbs_code = document.getElementById('wbs_code').value.trim();
+            const metadata = JSON.stringify({index: taskIndex}).replaceAll("\"", "'");
 
             let task = {
                 id: taskId,
@@ -473,6 +606,7 @@ export default class Gantt extends Component {
                 discipline_id: taskType===TASK_TYPE_TASK?taskDisciplineId:null,
                 crew_size: taskType===TASK_TYPE_TASK?taskCrewSize:null,
                 wbs_code: wbs_code,
+                metadata: metadata,
                 progress: 0
             }
 
@@ -483,7 +617,7 @@ export default class Gantt extends Component {
                 if(_taskId){
                     task['_id'] = _taskId;
                     taskInfo = await getBackendAPI().updateTask(task);
-                    this.tasks = this.tasks.map(t => t.id == taskId? {id: taskId, ...taskInfo}:t);
+                    this.tasks = this.tasks.map(t => t.id == taskId? {id: taskId, ...taskInfo, metadata: {index: taskIndex}}:t);
                 } else {
                     taskInfo = await getBackendAPI().addTask(task);
                     const task_project_key = `${task.project_id}_${task.plan_id}_${task.work_package_id}`;
@@ -494,7 +628,7 @@ export default class Gantt extends Component {
                             id: projectId,
                             type: TASK_TYPE_PROJECT,
                             text: `Sub Project: ${taskInfo.project_info.name} Plan: ${taskInfo.plan_info.name} WorkPackage: ${taskInfo.work_package_info.tag_name}`,
-                            date: '',
+                            date: date_str_format(taskDate, DATE_STRING_FORMAT),
                             duration: 0,
                             parent: 0,
                             project_id: task.project_id,
@@ -506,11 +640,14 @@ export default class Gantt extends Component {
                             discipline_id: null,
                             crew_size: null,
                             wbs_code: '',
+                            metadata,
                             progress: 0
                         }
                         await getBackendAPI().addTask(projectTask);
                     }
-                    this.tasks.push({...taskInfo, id: taskId});
+                     // Update Status Code
+                    this.tasks.push({...taskInfo, id: taskId, metadata: {index: taskIndex}});
+                    await this.updateStatusCode(taskId);
                 }
 
                 this.onSaveTaskOnChart(taskInfo);
@@ -546,6 +683,7 @@ export default class Gantt extends Component {
                 id: projectId++,
                 type: TASK_TYPE_PROJECT,
                 text: `Sub Project: ${info.project_info.name} Plan: ${info.plan_info.name} WorkPackage: ${info.work_package_info.tag_name}`,
+                start_date: task.end_date,
                 open: true
             }
             gantt.addTask(this.projects[task_project_key], 0);
@@ -578,6 +716,8 @@ export default class Gantt extends Component {
                 gantt.deleteTask(this.state.taskId);
                 gantt.hideLightbox();
                 this.tasks = this.tasks.filter(t => t._id !== this.state._taskId);
+                const childTask = this.tasks.find(t => t.parent == this.state.selectParentId);
+                await this.updateStatusCode(childTask.id);
                 this.setState({openAddDlg: false, taskId: null, _taskId: null, selectParentId: null});
             } catch (e) {
 
@@ -596,6 +736,10 @@ export default class Gantt extends Component {
         }
     }
 
+    onExportPdf = () => {
+        gantt.exportToPDF();
+    }
+
     render() {
         const {taskType, taskText, taskDate, taskProjectId, taskPlanId, taskWorkPackageId, taskLocationIds, taskTeamId, taskStatusCode, taskDisciplineId, taskCrewSize, duration, taskWBSCode, selectParentId} = this.state;
         const {teams, workPackages, disciplines, locations, plans, projects} = this.props;
@@ -608,8 +752,19 @@ export default class Gantt extends Component {
             <>
                 <div
                     ref={ (input) => { this.ganttContainer = input } }
-                    style={ { width: '100%', height: '100%' } }
+                    style={ { width: '100%', height: 'calc(100% - 52px)' } }
                 ></div>
+                <Row className="my-2 float-right">
+                    <Col sm={12}>
+                        <Button
+                            color="primary"
+                            className={"btn-primary btn waves-effect waves-light"}
+                            onClick={this.onExportPdf}
+                        >
+                            Export To PDF
+                        </Button>
+                    </Col>
+                </Row>
                 <Modal
                     className="modal-lg modal-dialog-centered"
                     isOpen={this.state.openAddDlg}
@@ -644,6 +799,7 @@ export default class Gantt extends Component {
                                 <Label for="task_date">Completion Date</Label>
                                 <InputGroup>
                                     <DatePicker
+                                        dateFormat="dd/MM/yyyy"
                                         className="date-picker-control"
                                         selected={taskDate}
                                         onChange={value => this.setState({taskDate: value})}
@@ -741,7 +897,7 @@ export default class Gantt extends Component {
                             </Col>
                             <Col lg="6">
                                 <Label for="task_status_code">Status Code</Label>
-                                <select id="task_status_code" defaultValue={taskStatusCode} name="task_status_code" className="form-control" onChange={(event) => this.setState({taskStatusCode: event.target.value, })}>
+                                <select id="task_status_code" disabled defaultValue={taskStatusCode} name="task_status_code" className="form-control" onChange={(event) => this.setState({taskStatusCode: event.target.value, })}>
                                     {statusCodes.map(item => (
                                         <option key={item._id} value={item._id}>{item.text}</option>
                                     ))}

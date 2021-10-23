@@ -2,7 +2,7 @@ module.exports = {
     /*server_base_url: 'http://103.253.146.235:4000',
     mongodb_host: 'localhost',*/
     server_base_url: 'http://localhost:4000',
-    mongodb_host: '192.168.31.49',
+    mongodb_host: 'localhost',
     mongodb_port: '27017',
     mongodb_database: 'veltrixdb',
     mongodb_user_name: '',

@@ -3,6 +3,7 @@ const jwt = require("jsonwebtoken");
 var bcrypt = require("bcryptjs");
 const nodemailer = require("nodemailer");
 const Config = require('../config');
+var mongoose = require('mongoose');
 
 const {
     User, Team, Member, Association,
@@ -26,6 +27,13 @@ var transport = {
         pass: Config.mailer_pass
     }
 }
+
+const STATUS_RELEASED = 1;
+const STATUS_RELEASED_AT_RISK = 2;
+const STATUS_CONSTRAINED = 3;
+const STATUS_COMPLETED = 4;
+const STATUS_COMPLETED_NO_PLANNED = 5;
+const STATUS_COMMITMENT_PLAN = 6;
 
 var transporter = nodemailer.createTransport(transport)
 
@@ -255,6 +263,7 @@ const TaskType = new GraphQLObjectType({
         status_code: {type: GraphQLInt},
         crew_size: {type: GraphQLInt},
         wbs_code: {type: GraphQLString},
+        metadata: {type: GraphQLString},
         progress: {type: GraphQLFloat},
         project_info: {
             type: ProjectType,
@@ -1048,9 +1057,10 @@ const Mutation = new GraphQLObjectType({
                 status_code: {type: GraphQLInt},
                 crew_size: {type: GraphQLInt},
                 wbs_code: {type: GraphQLString},
+                metadata: {type: GraphQLString},
                 progress: {type: GraphQLFloat}
             },
-            resolve(parent, args) {
+            async resolve(parent, args) {
                 let task = new Task({
                     id: args.id,
                     type: args.type,
@@ -1067,6 +1077,7 @@ const Mutation = new GraphQLObjectType({
                     status_code: args.status_code,
                     crew_size: args.crew_size,
                     wbs_code: args.wbs_code,
+                    metadata: args.metadata,
                     progress: args.progress
                 })
                 return task.save();
@@ -1091,6 +1102,7 @@ const Mutation = new GraphQLObjectType({
                 status_code: {type: GraphQLInt},
                 crew_size: {type: GraphQLInt},
                 wbs_code: {type: GraphQLString},
+                metadata: {type: GraphQLString},
                 progress: {type: GraphQLFloat}
             },
             async resolve(parent, args) {
@@ -1110,6 +1122,7 @@ const Mutation = new GraphQLObjectType({
                 task.status_code = args.status_code;
                 task.crew_size = args.crew_size;
                 task.wbs_code = args.wbs_code;
+                task.metadata = args.metadata;
                 task.progress = args.progress;
                 return task.save();
             }
@@ -1120,7 +1133,7 @@ const Mutation = new GraphQLObjectType({
                 _id: {type: GraphQLString}
             },
             async resolve(parent, args) {
-                await Task.findByIdAndDelete(args._id);
+                let task = await Task.findByIdAndDelete(args._id);
                 return {success: true};
             }
         },
@@ -1170,6 +1183,47 @@ const Mutation = new GraphQLObjectType({
                 return {success: true};
             }
         },
+        update_status_code: {
+            type: new GraphQLList(TaskType),
+            args: {
+                _id: {type: GraphQLString}
+            },
+            async resolve(parent, args) {
+                const taskRecords = await Task.find({});
+                const tasks = taskRecords.map(t => {
+                    const metadata = t.metadata?JSON.parse(t.metadata.replace(/'/g, "\"")):{};
+                    return {...t._doc, metadata: {...metadata}};
+                });
+                tasks.sort((a, b) => a.metadata.index - b.metadata.index);
+
+                let task = tasks.find(t => t._id == args._id);
+                if(task){
+                    let milestone = tasks.find(t => t.id == task.parent);
+                    let childTasks = tasks.filter(t => t.parent == task.parent);
+                    let childs = childTasks.length;
+
+                    if(childs > 2 && childTasks[childs - 3].status_code !== STATUS_CONSTRAINED){
+                        console.log('update status 3', STATUS_CONSTRAINED);
+                        await Task.findByIdAndUpdate(mongoose.Types.ObjectId(childTasks[childs - 3]._id), {status_code: STATUS_CONSTRAINED});
+                    }
+                    if(childs > 1 && childTasks[childs - 2].status_code !== STATUS_RELEASED_AT_RISK){
+                        console.log('update status 2', STATUS_RELEASED_AT_RISK);
+                        await Task.findByIdAndUpdate(mongoose.Types.ObjectId(childTasks[childs - 2]._id), {status_code: STATUS_RELEASED_AT_RISK});
+                    }
+                    if(childs > 0 && childTasks[childs - 1].status_code !== STATUS_RELEASED){
+                        console.log('update status 1', STATUS_RELEASED);
+                        await Task.findByIdAndUpdate(mongoose.Types.ObjectId(childTasks[childs - 1]._id), {status_code: STATUS_RELEASED});
+                    }
+
+                    const milestoneStatus = STATUS_CONSTRAINED - (childs < 3?2 - childs:0);
+                    if(milestone && milestone.status_code !== milestoneStatus){
+                        console.log('update status milestone', milestoneStatus);
+                        await Task.findByIdAndUpdate(mongoose.Types.ObjectId(milestone._id), {status_code: milestoneStatus});
+                    }
+                }
+                return Task.find({});
+            }
+        }
     }
 })
 

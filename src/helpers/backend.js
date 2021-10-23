@@ -1032,11 +1032,11 @@ class BackendAPI {
     }
 
     // Task
-    addTask = ({id, type, text, date, duration, parent, project_id, plan_id, work_package_id, location_id, team_id, status_code, discipline_id, crew_size, wbs_code, progress}) => {
+    addTask = ({id, type, text, date, duration, parent, project_id, plan_id, work_package_id, location_id, team_id, status_code, discipline_id, crew_size, wbs_code, progress, metadata}) => {
         return new Promise((resolve, reject) => {
             postCall(`mutation{
         add_task(id: "${id}", type:"${type}", text:"${text}", date: "${date}", duration: ${duration}, parent: "${parent}", project_id: "${project_id}", plan_id: "${plan_id}", 
-        work_package_id: "${work_package_id}", location_id: "${location_id}", team_id: "${team_id}", status_code: ${status_code}, discipline_id: ${discipline_id?`"${discipline_id}"`:discipline_id}, crew_size: ${crew_size}, wbs_code: "${wbs_code}", progress: ${progress}){
+        work_package_id: "${work_package_id}", location_id: "${location_id}", team_id: "${team_id}", status_code: ${status_code}, discipline_id: ${discipline_id?`"${discipline_id}"`:discipline_id}, crew_size: ${crew_size}, wbs_code: "${wbs_code}", progress: ${progress}, metadata: "${metadata}"){
             _id,
             id,
             type,
@@ -1053,6 +1053,7 @@ class BackendAPI {
             status_code,
             crew_size,
             wbs_code,
+            metadata,
             progress,
             team_info{
                 name
@@ -1082,11 +1083,11 @@ class BackendAPI {
         });
     }
 
-    updateTask = ({_id, id, type, text, date, duration, parent, project_id, plan_id, work_package_id, location_id, team_id, status_code, discipline_id, crew_size, wbs_code, progress}) => {
+    updateTask = ({_id, id, type, text, date, duration, parent, project_id, plan_id, work_package_id, location_id, team_id, status_code, discipline_id, crew_size, wbs_code, progress, metadata}) => {
         return new Promise((resolve, reject) => {
             postCall(`mutation{
         update_task(_id: "${_id}", id: "${id}", type:"${type}", text:"${text}", date: "${date}", duration: ${duration}, parent: "${parent}", project_id: "${project_id}", plan_id: "${plan_id}",
-        work_package_id: "${work_package_id}", location_id: "${location_id}", team_id: "${team_id}", status_code: ${status_code}, discipline_id: ${discipline_id?`"${discipline_id}"`:discipline_id}, crew_size: ${crew_size}, wbs_code: "${wbs_code}", progress: ${progress}){
+        work_package_id: "${work_package_id}", location_id: "${location_id}", team_id: "${team_id}", status_code: ${status_code}, discipline_id: ${discipline_id?`"${discipline_id}"`:discipline_id}, crew_size: ${crew_size}, wbs_code: "${wbs_code}", progress: ${progress}, metadata: "${metadata}"){
             _id,
             id,
             type,
@@ -1103,6 +1104,7 @@ class BackendAPI {
             status_code,
             crew_size,
             wbs_code,
+            metadata,
             progress,
             team_info{
                 name
@@ -1155,6 +1157,7 @@ class BackendAPI {
             status_code,
             crew_size,
             wbs_code,
+            metadata,
             progress,
             project_info{
                 name
@@ -1299,6 +1302,55 @@ class BackendAPI {
     }
 
 
+    updateStatusCode = (_id) => {
+        return new Promise((resolve, reject) => {
+            postCall(`mutation{
+        update_status_code(_id: "${_id}"){
+            _id,
+            id,
+            type,
+            text,
+            date,
+            duration,
+            parent,
+            project_id,
+            plan_id,
+            work_package_id,
+            location_id,
+            team_id,
+            discipline_id,
+            status_code,
+            crew_size,
+            wbs_code,
+            metadata,
+            progress,
+            project_info{
+                name
+            },
+            plan_info{
+                name
+            },
+            team_info{
+                name
+            },
+            work_package_info{
+                tag_name
+            },
+            discipline_info{
+                tag_name
+            }
+         }
+        }`, (res) => {
+                    if (res.update_status_code) {
+                        resolve(res.update_status_code);
+                    }
+                },
+                error => {
+                    reject(this._handleError(error));
+                }
+            );
+        });
+    }
     //-------------2021-09-23 Alex-----------------
     /**
      * Handle the error
