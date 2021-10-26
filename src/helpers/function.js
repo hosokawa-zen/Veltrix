@@ -1,4 +1,4 @@
-export const DATE_STRING_FORMAT = "dd/mm/yy";
+export const DATE_STRING_FORMAT = "mm/dd/yy";
 export const TIME_STRING_FORMAT = "hh:MM";
 export const DATE_TIME_STRING_FORMAT = "mm/dd/yy hh:MM";
 

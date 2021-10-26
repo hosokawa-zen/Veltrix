@@ -66,7 +66,7 @@ export default class Gantt extends Component {
             openAddDlg: false,
         };
         this.tasks = [];
-        this.teams = {};
+        this.resources = {};
         this.links = [];
         this.projects = {};
         this.invalidLink = null;
@@ -96,7 +96,7 @@ export default class Gantt extends Component {
                     id: t.id,
                     type: TASK_TYPE_PROJECT,
                     text: t.text,
-                    start_date: t.date,
+                    start_date: new Date(t.date),
                     render: "split",
                     open: true
                 }
@@ -113,102 +113,71 @@ export default class Gantt extends Component {
                 // ID: bigInteger - DB: String
                 this.tasks.push({...t, id: Number(t.id), parent: Number(t.parent)?Number(t.parent):this.projects[project_key].id});
 
+                if(!this.resources[t.team_id]){
+                    this.resources[t.team_id] = {id: t.team_id, text: t.team_info.name, parent: null};
+                }
                 if(t.type === TASK_TYPE_MILESTONE){
-                    tasks.push({id: t.id, text: t.text, type: t.type, start_date: t.date, team_id: t.team_id, parent: Number(this.projects[project_key].id), rollup: true, open: true});
-                    if(!this.teams[t.team_id]){
-                        this.teams[t.team_id] = {id: t.team_id, text: t.team_info.name, parent: null};
-                    }
+                    tasks.push({id: t.id, text: t.text, type: t.type, start_date: new Date(t.date), resource_id: t.team_id, parent: Number(this.projects[project_key].id), rollup: true, open: true, crew_size: 0});
                 } else {
-                    tasks.push({id: t.id, text: t.text, type: t.type, end_date: t.date, duration: t.duration, progress: t.progress, team_id: t.team_id, parent: t.parent});
+                    const resource_id = t.team_id + '_' + t.discipline_id;
+                    tasks.push({id: t.id, text: t.text, type: t.type, end_date: new Date(t.date), duration: t.duration, progress: t.progress, resource_id, parent: t.parent, crew_size: t.crew_size});
+                    if(!this.resources[resource_id]){
+                        this.resources[resource_id] = {id: resource_id, text: t.discipline_info.tag_name, parent: t.team_id};
+                    }
                 }
             } else {
                 this.tasks.push({...t, id: Number(t.id), parent: Number(t.parent)});
             }
         })
 
-        console.log('load', this.projects, tasks, this.teams);
         // ----------------------------------------------------------------------------
 
-        let resourceConfig = {
+
+
+        // back planning
+        gantt.config.schedule_from_end = true;
+        gantt.config.project_end = new Date();
+        gantt.config.date_format = "%d/%m/%Y";
+
+        // resource
+        gantt.config.resource_render_empty_cells = true;
+        gantt.config.resource_store = "resource";
+        gantt.config.resource_property = "resource_id";
+        const resourceConfig = {
             columns: [
                 {
                     name: "name", label: "Team", tree:true, template: (resource) => {
                         return resource.text;
                     }
-                },
-                {
-                    name: "progress", label: "Complete", align:"center",template: (resource) => {
-                        let tasks = this.getResourceTasks(resource.id);
-
-                        let totalToDo = 0,
-                            totalDone = 0;
-                        tasks.forEach(function(task){
-                            totalToDo += task.duration;
-                            totalDone += task.duration * (task.progress || 0);
-                        });
-
-                        let completion = 0;
-                        if(totalToDo){
-                            completion = Math.floor((totalDone / totalToDo)*100);
-                        }
-
-                        return Math.floor(completion) + "%";
-                    }, resize: true
-                },
-                {
-                    name: "workload", label: "Workload", template: (resource) => {
-                        let tasks = this.getResourceTasks(resource.id);
-
-                        let totalDuration = 0;
-                        for (let i = 0; i < tasks.length; i++) {
-                            totalDuration += tasks[i].duration;
-                        }
-
-                        if(resourceMode === "hours") {
-                            return (totalDuration || 0) * 8 + "h";
-                        } else {
-                            return (totalDuration || 0) + "d";
-                        }
-                    }
-                },
-                {
-                    name: "capacity", label: "Capacity", align:"center",template: function (resource) {
-                        let store = gantt.getDatastore(gantt.config.resource_store);
-                        let n = store.hasChild(resource.id) ? store.getChildren(resource.id).length : 1
-
-                        let state = gantt.getState();
-
-                        if(resourceMode === "hours"){
-                            return gantt.calculateDuration(state.min_date, state.max_date) * n * 8 + "h";
-                        } else {
-                            return gantt.calculateDuration(state.min_date, state.max_date) * n + "d";
-                        }
-                    }
                 }
             ]
         };
 
-        gantt.templates.resource_cell_class = function(start_date, end_date, resource, tasks){
+        gantt.templates.resource_cell_class = (start_date, end_date, resource, tasks) => {
+            const resourceTasks = this.getResourceTasks(resource.id, start_date, end_date);
             const css = [];
             css.push("resource_marker");
-            if (tasks.length <= 1) {
+            if (resourceTasks.length > 0) {
                 css.push("workday_ok");
-            } else {
-                css.push("workday_over");
             }
             return css.join(" ");
         };
 
-        gantt.templates.resource_cell_value = function(start_date, end_date, resource, tasks){
-            return "<div>" + (resourceMode === "hours"?tasks.length * 8: tasks.length) + "</div>";
+        gantt.templates.resource_cell_value = (start_date, end_date, resource, tasks) => {
+            if(!gantt.isWorkTime(start_date)){
+                return "";
+            }
+            const resourceTasks = this.getResourceTasks(resource.id, start_date, end_date);
+            console.log('resource', resource.id, resourceTasks);
+            let crew_size = 0;
+            resourceTasks.forEach(t => {
+                crew_size += t.crew_size;
+            });
+            if(crew_size){
+                return "<div>" + crew_size + "</div>";
+            }
+            return "";
         };
-
-        // back planning
-        gantt.config.schedule_from_end = true;
-
-        // resource
-        gantt.config.resource_store = "resource";
-        gantt.config.resource_property = "team_id";
 
         // working days
         gantt.config.work_time = true;
@@ -218,7 +187,6 @@ export default class Gantt extends Component {
         gantt.config.duration_unit = "day";
         gantt.config.scale_height = 20 * 3;
         gantt.config.row_height = 30;
-
 
         var weekScaleTemplate = function (date) {
             var dateToStr = gantt.date.date_to_str("%d %M");
@@ -267,15 +235,6 @@ export default class Gantt extends Component {
                 },
                 {resizer: true, width: 1},
                 {
-                    height: 35,
-                    cols: [
-                        { html:"", group:"grids"},
-                        { resizer: true, width: 1},
-                        { html:"<label class='active' ><input checked class='resource-mode' type='radio' name='resource-mode' value='hours'> Hours per day</label>" +
-                                "<label><input class='resource-mode' type='radio' name='resource-mode' value='tasks'> Tasks per day</label>", css:"resource-controls"}
-                    ]
-                },
-                {
                     config: resourceConfig,
                     cols: [
                         {view: "resourceGrid", group:"grids", width: 435, scrollY: "resourceVScroll" },
@@ -299,36 +258,6 @@ export default class Gantt extends Component {
             }}
         ];
 
-        let resourceMode = "hours";
-        gantt.attachEvent("onGanttReady", function(){
-            let radios = [].slice.call(gantt.$container.querySelectorAll("input[type='radio'].resource-mode"));
-            radios.forEach(function(r){
-                gantt.event(r, "change", function(e){
-                    let radios = [].slice.call(gantt.$container.querySelectorAll("input[type='radio'].resource-mode"));
-                    radios.forEach(function(r){
-                        r.parentNode.className = r.parentNode.className.replace("active", "");
-                    });
-
-                    if(this.checked){
-                        resourceMode = this.value;
-                        this.parentNode.className += " active";
-                        gantt.getDatastore(gantt.config.resource_store).refresh();
-                    }
-                });
-            });
-        });
-
-        // Resources
-        const resourcesStore = gantt.createDatastore({
-            name: gantt.config.resource_store,
-            type: "treeDatastore",
-            initItem: function (item) {
-                item.parent = item.parent || gantt.config.root_id;
-                item[gantt.config.resource_property] = item.parent;
-                item.open = true;
-                return item;
-            }
-        });
 
         gantt.init(this.ganttContainer);
 
@@ -341,20 +270,28 @@ export default class Gantt extends Component {
         gantt.attachEvent("onAfterLinkDelete", this.onLinkDeleted);
         gantt.attachEvent("onRowDragEnd", this.onRowDrag);
 
-        resourcesStore.attachEvent("onParse", function(){
-            let people = [];
-            resourcesStore.eachItem(function(res){
-                if(!resourcesStore.hasChild(res.id)){
-                    let copy = gantt.copy(res);
-                    copy.key = res.id;
-                    copy.label = res.text;
-                    people.push(copy);
-                }
-            });
-            gantt.updateCollection("people", people);
+        // Resources
+        const resourcesStore = gantt.createDatastore({
+            name: gantt.config.resource_store,
+            type: "treeDatastore",
+            initItem: function (item) {
+                item.parent = item.parent || gantt.config.root_id;
+                item[gantt.config.resource_property] = item.id;
+                item.open = true;
+                return item;
+            }
         });
-
-        resourcesStore.parse(Object.values(this.teams));
+        resourcesStore.attachEvent("onParse", function(){
+            let resource = [];
+            resourcesStore.eachItem(function(res){
+                let copy = gantt.copy(res);
+                copy.key = res.id;
+                copy.label = res.text;
+                resource.push(copy);
+            });
+            gantt.updateCollection("people", resource);
+        });
+        resourcesStore.parse(Object.values(this.resources));
 
         // Config
         const config = {
@@ -365,15 +302,15 @@ export default class Gantt extends Component {
         gantt.parse(config);
     }
 
-    getResourceTasks = (resourceId) => {
+    getResourceTasks = (resourceId, from, to) => {
         let store = gantt.getDatastore(gantt.config.resource_store),
             field = gantt.config.resource_property,
             tasks;
 
         if(store.hasChild(resourceId)){
-            tasks = gantt.getTaskBy(field, store.getChildren(resourceId));
+            tasks = gantt.getTaskByTime(from, to).filter(t => store.getChildren(resourceId).includes(t[field]));
         }else{
-            tasks = gantt.getTaskBy(field, resourceId);
+            tasks = gantt.getTaskByTime(from, to).filter(t => t[field] === resourceId);
         }
         return tasks;
     }
@@ -475,6 +412,7 @@ export default class Gantt extends Component {
             try {
                 const taskInfo = await getBackendAPI().updateTask(updateTask);
                 this.tasks = this.tasks.map(t => t.id === taskInfo.id? {...t, date: updateTask.date, duration: updateTask.duration, progress: updateTask.progress }:t);
+                gantt.refreshData();
             } catch (e){
 
             }
@@ -670,9 +608,13 @@ export default class Gantt extends Component {
             startDate.setDate(startDate.getDate() - info.duration);
             task.start_date = startDate;
             task.progress = info.progress;
+            task.resource_id = info.team_id + "_" + info.discipline_id;
+            task.crew_size = info.crew_size;
         } else {
             task.type = TASK_TYPE_MILESTONE;
             task.start_date = new Date(info.date);
+            task.resource_id = info.team_id;
+            task.crew_size = 0;
         }
 
         const task_project_key = `${info.project_id}_${info.plan_id}_${info.work_package_id}`;
@@ -684,11 +626,13 @@ export default class Gantt extends Component {
                 type: TASK_TYPE_PROJECT,
                 text: `Sub Project: ${info.project_info.name} Plan: ${info.plan_info.name} WorkPackage: ${info.work_package_info.tag_name}`,
                 start_date: task.end_date,
+                render: "split",
                 open: true
             }
             gantt.addTask(this.projects[task_project_key], 0);
         }
 
+        gantt.hideLightbox();
         if(task.$new){
             delete task.$new;
             task.team_id = info.team_id;
@@ -697,7 +641,6 @@ export default class Gantt extends Component {
             gantt.updateTask(task.id);
         }
 
-        gantt.hideLightbox();
     }
 
     onCancel = () => {
