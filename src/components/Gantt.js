@@ -490,13 +490,14 @@ export default class Gantt extends Component {
     }
 
     updateMetadata = async (id, metadata) => {
-        let updateTask = this.tasks.find(t => t.id == id);
-        if(!updateTask){
+        let task = this.tasks.find(t => t.id == id);
+        if(!task){
             return;
         }
+        let updateTask = Object.assign({}, task);
         let taskMetadata = updateTask.metadata??{};
         taskMetadata = {...taskMetadata, ...metadata};
-        updateTask.metadata = JSON.stringify(taskMetadata).replaceAll("\"", "'");
+        updateTask.metadata = JSON.stringify(taskMetadata).replace(/"/g, "'");
         await getBackendAPI().updateTask(updateTask);
     }
 
@@ -526,7 +527,7 @@ export default class Gantt extends Component {
             const {_taskId, taskId, taskType, taskDate, taskParent, taskProjectId, taskPlanId, taskWorkPackageId, taskLocationIds, taskTeamId, taskStatusCode, taskDisciplineId, taskCrewSize, taskIndex, duration} = this.state;
             const description = document.getElementById('description').value.trim();
             const wbs_code = document.getElementById('wbs_code').value.trim();
-            const metadata = JSON.stringify({index: taskIndex}).replaceAll("\"", "'");
+            const metadata = JSON.stringify({index: taskIndex}).replace(/"/g, "'");
 
             let task = {
                 id: taskId,
