@@ -1032,11 +1032,11 @@ class BackendAPI {
     }
 
     // Task
-    addTask = ({id, type, text, date, duration, parent, project_id, plan_id, work_package_id, location_id, team_id, status_code, discipline_id, crew_size, wbs_code, progress, metadata}) => {
+    addTask = ({id, type, text, date, duration, parent, project_id, plan_id, work_package_id, location_id, team_id, status_code, discipline_id, crew_size, wbs_code, progress, metadata, index}) => {
         return new Promise((resolve, reject) => {
             postCall(`mutation{
         add_task(id: "${id}", type:"${type}", text:"${text}", date: "${date}", duration: ${duration}, parent: "${parent}", project_id: "${project_id}", plan_id: "${plan_id}", 
-        work_package_id: "${work_package_id}", location_id: "${location_id}", team_id: "${team_id}", status_code: ${status_code}, discipline_id: ${discipline_id?`"${discipline_id}"`:discipline_id}, crew_size: ${crew_size}, wbs_code: "${wbs_code}", progress: ${progress}, metadata: "${metadata}"){
+        work_package_id: "${work_package_id}", location_id: "${location_id}", team_id: "${team_id}", status_code: ${status_code}, discipline_id: ${discipline_id?`"${discipline_id}"`:discipline_id}, crew_size: ${crew_size}, wbs_code: "${wbs_code}", progress: ${progress}, metadata: "${metadata}", index: ${index}){
             _id,
             id,
             type,
@@ -1053,6 +1053,7 @@ class BackendAPI {
             status_code,
             crew_size,
             wbs_code,
+            index,
             metadata,
             progress,
             team_info{
@@ -1083,11 +1084,11 @@ class BackendAPI {
         });
     }
 
-    updateTask = ({_id, id, type, text, date, duration, parent, project_id, plan_id, work_package_id, location_id, team_id, status_code, discipline_id, crew_size, wbs_code, progress, metadata}) => {
+    updateTask = ({_id, id, type, text, date, duration, parent, project_id, plan_id, work_package_id, location_id, team_id, status_code, discipline_id, crew_size, wbs_code, progress, metadata, index}) => {
         return new Promise((resolve, reject) => {
             postCall(`mutation{
         update_task(_id: "${_id}", id: "${id}", type:"${type}", text:"${text}", date: "${date}", duration: ${duration}, parent: "${parent}", project_id: "${project_id}", plan_id: "${plan_id}",
-        work_package_id: "${work_package_id}", location_id: "${location_id}", team_id: "${team_id}", status_code: ${status_code}, discipline_id: ${discipline_id?`"${discipline_id}"`:discipline_id}, crew_size: ${crew_size}, wbs_code: "${wbs_code}", progress: ${progress}, metadata: "${metadata}"){
+        work_package_id: "${work_package_id}", location_id: "${location_id}", team_id: "${team_id}", status_code: ${status_code}, discipline_id: ${discipline_id?`"${discipline_id}"`:discipline_id}, crew_size: ${crew_size}, wbs_code: "${wbs_code}", progress: ${progress}, metadata: "${metadata}", index: ${index}){
             _id,
             id,
             type,
@@ -1104,6 +1105,7 @@ class BackendAPI {
             status_code,
             crew_size,
             wbs_code,
+            index,
             metadata,
             progress,
             team_info{
@@ -1157,6 +1159,7 @@ class BackendAPI {
             status_code,
             crew_size,
             wbs_code,
+            index,
             metadata,
             progress,
             project_info{
@@ -1298,6 +1301,24 @@ class BackendAPI {
                     reject(this._handleError(error));
                 }
             );
+        });
+    }
+
+    updateTaskIndex = (_id, source, target) => {
+        return new Promise((resolve, reject) => {
+            postCall(`mutation{
+        update_index(_id: "${_id}", source:${source}, target: ${target}){
+            success
+        }
+      }`, (res) => {
+                if (res.update_index.success) {
+                    resolve(res.update_index);
+                } else {
+                    reject("Update Failed");
+                }
+            }, error => {
+                reject(this._handleError(error));
+            });
         });
     }
 

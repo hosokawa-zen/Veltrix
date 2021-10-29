@@ -28,9 +28,15 @@
     max-width: unset;
 }
 
-
 .gantt-container {
+    width: 100%;
     height: calc(100vh - 144px);
+}
+
+.export-csv-btn {
+    position: absolute;
+    z-index: 99;
+    bottom: 4px;
 }
 
 .date-picker-control {

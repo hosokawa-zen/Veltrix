@@ -263,6 +263,7 @@ const TaskType = new GraphQLObjectType({
         status_code: {type: GraphQLInt},
         crew_size: {type: GraphQLInt},
         wbs_code: {type: GraphQLString},
+        index: {type: GraphQLInt},
         metadata: {type: GraphQLString},
         progress: {type: GraphQLFloat},
         project_info: {
@@ -1057,10 +1058,12 @@ const Mutation = new GraphQLObjectType({
                 status_code: {type: GraphQLInt},
                 crew_size: {type: GraphQLInt},
                 wbs_code: {type: GraphQLString},
+                index: {type: GraphQLInt},
                 metadata: {type: GraphQLString},
                 progress: {type: GraphQLFloat}
             },
             async resolve(parent, args) {
+                await Task.updateMany({parent: args.parent, index: {$gte: args.index}}, {$inc: {index: 1}});
                 let task = new Task({
                     id: args.id,
                     type: args.type,
@@ -1077,6 +1080,7 @@ const Mutation = new GraphQLObjectType({
                     status_code: args.status_code,
                     crew_size: args.crew_size,
                     wbs_code: args.wbs_code,
+                    index: args.index,
                     metadata: args.metadata,
                     progress: args.progress
                 })
@@ -1102,6 +1106,7 @@ const Mutation = new GraphQLObjectType({
                 status_code: {type: GraphQLInt},
                 crew_size: {type: GraphQLInt},
                 wbs_code: {type: GraphQLString},
+                index: {type: GraphQLInt},
                 metadata: {type: GraphQLString},
                 progress: {type: GraphQLFloat}
             },
@@ -1122,7 +1127,10 @@ const Mutation = new GraphQLObjectType({
                 task.status_code = args.status_code;
                 task.crew_size = args.crew_size;
                 task.wbs_code = args.wbs_code;
-                task.metadata = args.metadata;
+                task.index = args.index;
+                if(args.metadata){
+                    task.metadata = args.metadata;
+                }
                 task.progress = args.progress;
                 return task.save();
             }
@@ -1180,6 +1188,24 @@ const Mutation = new GraphQLObjectType({
             },
             async resolve(parent, args) {
                 await Link.findByIdAndDelete(args._id);
+                return {success: true};
+            }
+        },
+        update_index: {
+            type: SuccessType,
+            args: {
+                _id: {type: GraphQLString},
+                source: {type: GraphQLInt},
+                target: {type: GraphQLInt},
+            },
+            async resolve(parent, args) {
+                const task = await Task.findById(args._id);
+                if(args.source < args.target){
+                    await Task.updateMany({parent: task.parent, index: {$gt: args.source, $lte: args.target}}, {$inc: {index: -1}});
+                } else {
+                    await Task.updateMany({parent: task.parent, index: {$lt: args.source, $gte: args.target}}, {$inc: {index: 1}});
+                }
+                await Task.findByIdAndUpdate(mongoose.Types.ObjectId(args._id), {index: args.target});
                 return {success: true};
             }
         },

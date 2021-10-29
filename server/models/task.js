@@ -17,6 +17,7 @@ const taskSchema = new Schema({
     status_code: Number,
     crew_size: Number,
     wbs_code: String,
+    index: Number,
     metadata: String,
     progress: Number
 }, { collection: 'tasks' });
