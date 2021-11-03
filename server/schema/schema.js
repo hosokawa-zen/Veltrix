@@ -1142,6 +1142,11 @@ const Mutation = new GraphQLObjectType({
             },
             async resolve(parent, args) {
                 let task = await Task.findByIdAndDelete(args._id);
+                let tasks = await Task.find({parent:  task.id});
+                for(let i; i < tasks.length; i++){
+                    tasks[i].remove();
+                    await Task.remove({parent: tasks[i].id});
+                }
                 return {success: true};
             }
         },
@@ -1215,12 +1220,8 @@ const Mutation = new GraphQLObjectType({
                 _id: {type: GraphQLString}
             },
             async resolve(parent, args) {
-                const taskRecords = await Task.find({});
-                const tasks = taskRecords.map(t => {
-                    const metadata = t.metadata?JSON.parse(t.metadata.replace(/'/g, "\"")):{};
-                    return {...t._doc, metadata: {...metadata}};
-                });
-                tasks.sort((a, b) => a.metadata.index - b.metadata.index);
+                const tasks = await Task.find({});
+                tasks.sort((a, b) => a.index - b.index);
 
                 let task = tasks.find(t => t._id == args._id);
                 if(task){

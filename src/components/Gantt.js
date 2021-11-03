@@ -77,10 +77,12 @@ export default class Gantt extends Component {
     }
 
     init = async () => {
-        const taskInfos = (await getBackendAPI().getTasks()).map(t => {
-            let metadata = t.metadata?JSON.parse(t.metadata.replaceAll("'", "\"")):{};
-            return {...t, metadata: {...metadata}};
-        });
+        const taskInfos = await getBackendAPI().getTasks();
+        // TODO Disable metadata (must fix bugs)
+        // const taskInfos = (await getBackendAPI().getTasks()).map(t => {
+        //     let metadata = t.metadata?JSON.parse(t.metadata.replaceAll("'", "\"")):{};
+        //     return {...t, metadata: {...metadata}};
+        // });
         this.links = await getBackendAPI().getLinks();
 
         let tasks = [];
@@ -318,7 +320,7 @@ export default class Gantt extends Component {
     onShowLightBox = (id) => {
         let task = gantt.getTask(id);
         const taskIndex = gantt.getTaskIndex(id);
-        console.log('open task', task);
+        console.log('open task', task, taskIndex);
         if(task.$new){
             const selectParentId = Number(task.parent);
             if(selectParentId){
@@ -410,7 +412,7 @@ export default class Gantt extends Component {
             updateTask.date = updateTask.type === TASK_TYPE_MILESTONE?date_str_format(item.start_date, DATE_STRING_FORMAT):date_str_format(item.end_date, DATE_STRING_FORMAT);
             updateTask.duration = item.duration;
             updateTask.progress = item.progress;
-            updateTask.metadata = JSON.stringify(updateTask.metadata).replace(/"/g, "'")??"{}";
+            //updateTask.metadata = JSON.stringify(updateTask.metadata).replace(/"/g, "'")??"{}";
             try {
                 const taskInfo = await getBackendAPI().updateTask(updateTask);
                 this.tasks = this.tasks.map(t => t.id === taskInfo.id? {...t, date: updateTask.date, duration: updateTask.duration, progress: updateTask.progress }:t);
@@ -531,7 +533,7 @@ export default class Gantt extends Component {
             const {_taskId, taskId, taskType, taskDate, taskParent, taskProjectId, taskPlanId, taskWorkPackageId, taskLocationIds, taskTeamId, taskStatusCode, taskDisciplineId, taskCrewSize, taskIndex, duration} = this.state;
             const description = document.getElementById('description').value.trim();
             const wbs_code = document.getElementById('wbs_code').value.trim();
-            const metadata = JSON.stringify({index: taskIndex}).replace(/"/g, "'");
+            //const metadata = JSON.stringify({index: taskIndex}).replace(/"/g, "'");
 
             let task = {
                 id: taskId,
@@ -549,7 +551,7 @@ export default class Gantt extends Component {
                 discipline_id: taskType===TASK_TYPE_TASK?taskDisciplineId:null,
                 crew_size: taskType===TASK_TYPE_TASK?taskCrewSize:null,
                 wbs_code: wbs_code,
-                metadata: metadata,
+                //metadata: metadata,
                 index: taskIndex,
                 progress: 0
             }
@@ -586,7 +588,7 @@ export default class Gantt extends Component {
                             discipline_id: null,
                             crew_size: null,
                             wbs_code: '',
-                            metadata,
+                            //metadata,
                             index: taskIndex,
                             progress: 0
                         }
@@ -656,7 +658,7 @@ export default class Gantt extends Component {
     onCancel = () => {
         let task = gantt.getTask(this.state.taskId);
 
-        if(task.$new)
+        if(task && task.$new)
             gantt.deleteTask(task.id);
         gantt.hideLightbox();
         this.setState({openAddDlg: false, taskId: null, _taskId: null, selectParentId: null});
@@ -670,9 +672,11 @@ export default class Gantt extends Component {
                 gantt.hideLightbox();
                 this.tasks = this.tasks.filter(t => t._id !== this.state._taskId);
                 const childTask = this.tasks.find(t => t.parent == this.state.selectParentId);
-                await this.updateStatusCode(childTask.id);
-                await this.init();
+                if(childTask && this.state.taskType === TASK_TYPE_TASK){
+                    await this.updateStatusCode(childTask.id);
+                }
                 this.setState({openAddDlg: false, taskId: null, _taskId: null, selectParentId: null});
+                await this.init();
             } catch (e) {
 
             }
